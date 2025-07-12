@@ -1,7 +1,7 @@
 <template>
   <div class="relative w-full h-full bg-white rounded-lg shadow-md overflow-hidden">
     <!-- 坐标系 -->
-    <div class="absolute inset-0 p-8" @mouseleave="resetActiveQuadrant">
+    <div class="absolute inset-0 p-8" @mouseleave="activeQuadrant.value !== 0 && resetActiveQuadrant()">
       <!-- Y轴标签 (重要度) - 默认状态 -->
       <div v-if="activeQuadrant === 0" class="absolute top-0 left-0 h-full flex items-center">
         <div class="transform -rotate-90 origin-center whitespace-nowrap text-sm font-medium text-blue-500 animate-fadeIn">
@@ -32,22 +32,22 @@
         <g v-if="activeQuadrant === 0">
           <rect 
             x="10%" y="5%" width="40%" height="45%" 
-            class="fill-danger-bg transition-all duration-500 cursor-pointer opacity-30 hover:opacity-50"
+            class="fill-blue-50 transition-all duration-500 cursor-pointer opacity-30 hover:opacity-50 stroke-blue-200 stroke-1"
             @mouseenter="setActiveQuadrant(1)" 
           />
           <rect 
             x="50%" y="5%" width="45%" height="45%" 
-            class="fill-important-bg transition-all duration-500 cursor-pointer opacity-30 hover:opacity-50"
+            class="fill-blue-50 transition-all duration-500 cursor-pointer opacity-30 hover:opacity-50 stroke-blue-200 stroke-1"
             @mouseenter="setActiveQuadrant(2)" 
           />
           <rect 
             x="10%" y="50%" width="40%" height="40%" 
-            class="fill-urgent-bg transition-all duration-500 cursor-pointer opacity-30 hover:opacity-50"
+            class="fill-blue-50 transition-all duration-500 cursor-pointer opacity-30 hover:opacity-50 stroke-blue-200 stroke-1"
             @mouseenter="setActiveQuadrant(3)" 
           />
           <rect 
             x="50%" y="50%" width="45%" height="40%" 
-            class="fill-gray-100 transition-all duration-500 cursor-pointer opacity-30 hover:opacity-50"
+            class="fill-blue-50 transition-all duration-500 cursor-pointer opacity-30 hover:opacity-50 stroke-blue-200 stroke-1"
             @mouseenter="setActiveQuadrant(4)" 
           />
         </g>
@@ -56,26 +56,22 @@
         <rect 
           v-if="activeQuadrant === 1"
           x="5%" y="5%" width="90%" height="85%" 
-          class="fill-danger-bg transition-all duration-700 cursor-pointer opacity-90 animate-zoom-in"
-          @mouseleave="resetActiveQuadrant"
+          class="fill-blue-50 transition-all duration-700 cursor-pointer opacity-80 animate-zoom-in stroke-blue-200 stroke-1"
         />
         <rect 
           v-if="activeQuadrant === 2"
           x="5%" y="5%" width="90%" height="85%" 
-          class="fill-important-bg transition-all duration-700 cursor-pointer opacity-90 animate-zoom-in"
-          @mouseleave="resetActiveQuadrant"
+          class="fill-blue-50 transition-all duration-700 cursor-pointer opacity-80 animate-zoom-in stroke-blue-200 stroke-1"
         />
         <rect 
           v-if="activeQuadrant === 3"
           x="5%" y="5%" width="90%" height="85%" 
-          class="fill-urgent-bg transition-all duration-700 cursor-pointer opacity-90 animate-zoom-in"
-          @mouseleave="resetActiveQuadrant"
+          class="fill-blue-50 transition-all duration-700 cursor-pointer opacity-80 animate-zoom-in stroke-blue-200 stroke-1"
         />
         <rect 
           v-if="activeQuadrant === 4"
           x="5%" y="5%" width="90%" height="85%" 
-          class="fill-gray-100 transition-all duration-700 cursor-pointer opacity-90 animate-zoom-in"
-          @mouseleave="resetActiveQuadrant"
+          class="fill-blue-50 transition-all duration-700 cursor-pointer opacity-80 animate-zoom-in stroke-blue-200 stroke-1"
         />
         
         <!-- 水平中线 (Y=5) -->
@@ -94,37 +90,65 @@
           :class="{'opacity-0': activeQuadrant !== 0}"
         />
         
-        <!-- X轴 - 默认状态 -->
+        <!-- X轴 - 始终显示 -->
         <line 
-          v-if="activeQuadrant === 0"
           x1="10%" y1="90%" x2="95%" y2="90%" 
           stroke="#3B82F6" stroke-width="2"
-          class="transition-all duration-500 animate-draw-x animate-glow"
+          class="transition-all duration-500 animate-glow"
         />
         
-        <!-- Y轴 - 默认状态 -->
+        <!-- Y轴 - 始终显示 -->
         <line 
-          v-if="activeQuadrant === 0"
           x1="10%" y1="90%" x2="10%" y2="5%" 
           stroke="#3B82F6" stroke-width="2"
-          class="transition-all duration-500 animate-draw-y animate-glow"
+          class="transition-all duration-500 animate-glow"
         />
         
-        <!-- X轴 - 放大状态 -->
-        <line 
-          v-if="activeQuadrant !== 0"
-          x1="10%" y1="50%" x2="95%" y2="50%" 
-          stroke="#3B82F6" stroke-width="2"
-          class="transition-all duration-700 animate-glow animate-zoom-in"
-        />
+        <!-- X轴刻度线 -->
+        <g>
+          <!-- 刻度线 1 -->
+          <line x1="10%" y1="90%" x2="10%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="10%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">0</text>
+          
+          <!-- 刻度线 2 -->
+          <line x1="27%" y1="90%" x2="27%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="27%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">2</text>
+          
+          <!-- 刻度线 5 -->
+          <line x1="53%" y1="90%" x2="53%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="53%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">5</text>
+          
+          <!-- 刻度线 8 -->
+          <line x1="78%" y1="90%" x2="78%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="78%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">8</text>
+          
+          <!-- 刻度线 10 -->
+          <line x1="95%" y1="90%" x2="95%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="95%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">10</text>
+        </g>
         
-        <!-- Y轴 - 放大状态 -->
-        <line 
-          v-if="activeQuadrant !== 0"
-          x1="50%" y1="5%" x2="50%" y2="90%" 
-          stroke="#3B82F6" stroke-width="2"
-          class="transition-all duration-700 animate-glow animate-zoom-in"
-        />
+        <!-- Y轴刻度线 -->
+        <g>
+          <!-- 刻度线 1 -->
+          <line x1="8%" y1="90%" x2="10%" y2="90%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="90%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">0</text>
+          
+          <!-- 刻度线 2 -->
+          <line x1="8%" y1="73%" x2="10%" y2="73%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="73%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">2</text>
+          
+          <!-- 刻度线 5 -->
+          <line x1="8%" y1="48%" x2="10%" y2="48%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="48%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">5</text>
+          
+          <!-- 刻度线 8 -->
+          <line x1="8%" y1="22%" x2="10%" y2="22%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="22%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">8</text>
+          
+          <!-- 刻度线 10 -->
+          <line x1="8%" y1="5%" x2="10%" y2="5%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="5%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">10</text>
+        </g>
         
         <!-- 象限标签 - 默认状态 -->
         <g v-if="activeQuadrant === 0">
@@ -213,7 +237,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 animate-pulse-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span>当前正在查看<span class="font-bold">{{ getQuadrantName(activeQuadrant) }}</span>象限，鼠标移出可返回全局视图</span>
+        <span>当前正在查看<span class="font-bold">{{ getQuadrantName(activeQuadrant) }}</span>象限，<span class="font-bold">将鼠标移出整个坐标系</span>可返回全局视图</span>
       </div>
       
       <!-- 任务信息提示框 -->
@@ -263,9 +287,22 @@
         @click="resetActiveQuadrant"
         class="bg-white text-gray-700 rounded-full p-2 shadow-md hover:bg-gray-100 transition-all duration-300 hover:scale-110"
         :class="{'bg-primary text-white': activeQuadrant === 0}"
+        title="重置视图"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+        </svg>
+      </button>
+      
+      <!-- 鼠标悬停放大开关 -->
+      <button 
+        @click="hoverZoomEnabled = !hoverZoomEnabled"
+        class="bg-white text-gray-700 rounded-full p-2 shadow-md hover:bg-gray-100 transition-all duration-300 hover:scale-110"
+        :class="{'bg-primary text-white': hoverZoomEnabled}"
+        title="鼠标悬停放大开关"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
         </svg>
       </button>
     </div>
@@ -289,10 +326,14 @@ const props = defineProps({
 const emit = defineEmits(['edit-task', 'add-task']);
 const hoveredTask = ref(null);
 const activeQuadrant = ref(0); // 0表示无活动象限，1-4表示四个象限
+const hoverZoomEnabled = ref(false); // 控制鼠标悬停放大象限事件的开关
 
 // 设置活动象限
 function setActiveQuadrant(quadrant) {
-  activeQuadrant.value = quadrant;
+  // 只有当开关启用时，才允许通过鼠标悬停设置活动象限
+  if (hoverZoomEnabled.value || activeQuadrant.value !== 0) {
+    activeQuadrant.value = quadrant;
+  }
 }
 
 // 重置活动象限
@@ -351,7 +392,7 @@ function getPriorityBarColor(task) {
 
 // 获取任务X坐标位置
 function getTaskPositionX(task) {
-  if (activeQuadrant === 0) {
+  if (activeQuadrant.value === 0) {
     // 默认视图下的位置
     return `${10 + (task.urgency - 1) * 8.5}%`;
   } else if (isTaskInActiveQuadrant(task)) {
@@ -375,7 +416,7 @@ function getTaskPositionX(task) {
 
 // 获取任务Y坐标位置
 function getTaskPositionY(task) {
-  if (activeQuadrant === 0) {
+  if (activeQuadrant.value === 0) {
     // 默认视图下的位置
     return `${90 - (task.importance - 1) * 8.5}%`;
   } else if (isTaskInActiveQuadrant(task)) {
@@ -399,7 +440,7 @@ function getTaskPositionY(task) {
 
 // 获取提示框X坐标位置
 function getTooltipPositionX(task) {
-  if (activeQuadrant === 0) {
+  if (activeQuadrant.value === 0) {
     return `${Math.min(85, 10 + (task.urgency - 1) * 8.5)}%`;
   } else {
     // 放大视图下，提示框位置需要调整
@@ -421,7 +462,7 @@ function getTooltipPositionX(task) {
 
 // 获取提示框Y坐标位置
 function getTooltipPositionY(task) {
-  if (activeQuadrant === 0) {
+  if (activeQuadrant.value === 0) {
     return `${Math.min(80, 90 - (task.importance - 1) * 8.5)}%`;
   } else {
     // 放大视图下，提示框位置需要调整
