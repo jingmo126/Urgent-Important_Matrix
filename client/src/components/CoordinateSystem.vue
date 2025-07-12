@@ -104,8 +104,8 @@
           class="transition-all duration-500 animate-glow"
         />
         
-        <!-- X轴刻度线 -->
-        <g>
+        <!-- X轴刻度线 - 默认状态 -->
+        <g v-if="activeQuadrant === 0">
           <!-- 刻度线 1 -->
           <line x1="10%" y1="90%" x2="10%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
           <text x="10%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">0</text>
@@ -127,8 +127,116 @@
           <text x="95%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">10</text>
         </g>
         
-        <!-- Y轴刻度线 -->
-        <g>
+        <!-- X轴刻度线 - 第一象限放大状态 (紧急度 1-5) -->
+        <g v-if="activeQuadrant === 1">
+          <!-- 刻度线 1 -->
+          <line x1="5%" y1="90%" x2="5%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="5%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">1</text>
+          
+          <!-- 刻度线 2 -->
+          <line x1="23%" y1="90%" x2="23%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="23%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">2</text>
+          
+          <!-- 刻度线 3 -->
+          <line x1="41%" y1="90%" x2="41%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="41%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">3</text>
+          
+          <!-- 刻度线 4 -->
+          <line x1="59%" y1="90%" x2="59%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="59%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">4</text>
+          
+          <!-- 刻度线 5 -->
+          <line x1="77%" y1="90%" x2="77%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="77%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">5</text>
+          
+          <!-- 刻度线 紧急度上限 -->
+          <line x1="95%" y1="90%" x2="95%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="95%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">5+</text>
+        </g>
+        
+        <!-- X轴刻度线 - 第二象限放大状态 (紧急度 6-10) -->
+        <g v-if="activeQuadrant === 2">
+          <!-- 刻度线 6 -->
+          <line x1="5%" y1="90%" x2="5%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="5%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">6</text>
+          
+          <!-- 刻度线 7 -->
+          <line x1="23%" y1="90%" x2="23%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="23%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">7</text>
+          
+          <!-- 刻度线 8 -->
+          <line x1="41%" y1="90%" x2="41%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="41%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">8</text>
+          
+          <!-- 刻度线 9 -->
+          <line x1="59%" y1="90%" x2="59%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="59%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">9</text>
+          
+          <!-- 刻度线 10 -->
+          <line x1="77%" y1="90%" x2="77%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="77%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">10</text>
+          
+          <!-- 刻度线 紧急度上限 -->
+          <line x1="95%" y1="90%" x2="95%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="95%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">10+</text>
+        </g>
+        
+        <!-- X轴刻度线 - 第三象限放大状态 (紧急度 1-5) -->
+        <g v-if="activeQuadrant === 3">
+          <!-- 刻度线 1 -->
+          <line x1="5%" y1="90%" x2="5%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="5%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">1</text>
+          
+          <!-- 刻度线 2 -->
+          <line x1="23%" y1="90%" x2="23%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="23%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">2</text>
+          
+          <!-- 刻度线 3 -->
+          <line x1="41%" y1="90%" x2="41%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="41%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">3</text>
+          
+          <!-- 刻度线 4 -->
+          <line x1="59%" y1="90%" x2="59%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="59%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">4</text>
+          
+          <!-- 刻度线 5 -->
+          <line x1="77%" y1="90%" x2="77%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="77%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">5</text>
+          
+          <!-- 刻度线 紧急度上限 -->
+          <line x1="95%" y1="90%" x2="95%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="95%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">5+</text>
+        </g>
+        
+        <!-- X轴刻度线 - 第四象限放大状态 (紧急度 6-10) -->
+        <g v-if="activeQuadrant === 4">
+          <!-- 刻度线 6 -->
+          <line x1="5%" y1="90%" x2="5%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="5%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">6</text>
+          
+          <!-- 刻度线 7 -->
+          <line x1="23%" y1="90%" x2="23%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="23%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">7</text>
+          
+          <!-- 刻度线 8 -->
+          <line x1="41%" y1="90%" x2="41%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="41%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">8</text>
+          
+          <!-- 刻度线 9 -->
+          <line x1="59%" y1="90%" x2="59%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="59%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">9</text>
+          
+          <!-- 刻度线 10 -->
+          <line x1="77%" y1="90%" x2="77%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="77%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">10</text>
+          
+          <!-- 刻度线 紧急度上限 -->
+          <line x1="95%" y1="90%" x2="95%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="95%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">10+</text>
+        </g>
+        
+        <!-- Y轴刻度线 - 默认状态 -->
+        <g v-if="activeQuadrant === 0">
           <!-- 刻度线 1 -->
           <line x1="8%" y1="90%" x2="10%" y2="90%" stroke="#3B82F6" stroke-width="1.5" />
           <text x="6%" y="90%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">0</text>
@@ -148,6 +256,114 @@
           <!-- 刻度线 10 -->
           <line x1="8%" y1="5%" x2="10%" y2="5%" stroke="#3B82F6" stroke-width="1.5" />
           <text x="6%" y="5%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">10</text>
+        </g>
+        
+        <!-- Y轴刻度线 - 第一象限放大状态 (重要度 6-10) -->
+        <g v-if="activeQuadrant === 1">
+          <!-- 刻度线 6 -->
+          <line x1="8%" y1="90%" x2="10%" y2="90%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="90%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">6</text>
+          
+          <!-- 刻度线 7 -->
+          <line x1="8%" y1="73%" x2="10%" y2="73%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="73%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">7</text>
+          
+          <!-- 刻度线 8 -->
+          <line x1="8%" y1="56%" x2="10%" y2="56%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="56%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">8</text>
+          
+          <!-- 刻度线 9 -->
+          <line x1="8%" y1="39%" x2="10%" y2="39%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="39%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">9</text>
+          
+          <!-- 刻度线 10 -->
+          <line x1="8%" y1="22%" x2="10%" y2="22%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="22%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">10</text>
+          
+          <!-- 刻度线 重要度上限 -->
+          <line x1="8%" y1="5%" x2="10%" y2="5%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="5%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">10+</text>
+        </g>
+        
+        <!-- Y轴刻度线 - 第二象限放大状态 (重要度 6-10) -->
+        <g v-if="activeQuadrant === 2">
+          <!-- 刻度线 6 -->
+          <line x1="8%" y1="90%" x2="10%" y2="90%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="90%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">6</text>
+          
+          <!-- 刻度线 7 -->
+          <line x1="8%" y1="73%" x2="10%" y2="73%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="73%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">7</text>
+          
+          <!-- 刻度线 8 -->
+          <line x1="8%" y1="56%" x2="10%" y2="56%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="56%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">8</text>
+          
+          <!-- 刻度线 9 -->
+          <line x1="8%" y1="39%" x2="10%" y2="39%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="39%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">9</text>
+          
+          <!-- 刻度线 10 -->
+          <line x1="8%" y1="22%" x2="10%" y2="22%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="22%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">10</text>
+          
+          <!-- 刻度线 重要度上限 -->
+          <line x1="8%" y1="5%" x2="10%" y2="5%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="5%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">10+</text>
+        </g>
+        
+        <!-- Y轴刻度线 - 第三象限放大状态 (重要度 1-5) -->
+        <g v-if="activeQuadrant === 3">
+          <!-- 刻度线 1 -->
+          <line x1="8%" y1="90%" x2="10%" y2="90%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="90%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">1</text>
+          
+          <!-- 刻度线 2 -->
+          <line x1="8%" y1="73%" x2="10%" y2="73%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="73%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">2</text>
+          
+          <!-- 刻度线 3 -->
+          <line x1="8%" y1="56%" x2="10%" y2="56%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="56%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">3</text>
+          
+          <!-- 刻度线 4 -->
+          <line x1="8%" y1="39%" x2="10%" y2="39%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="39%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">4</text>
+          
+          <!-- 刻度线 5 -->
+          <line x1="8%" y1="22%" x2="10%" y2="22%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="22%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">5</text>
+          
+          <!-- 刻度线 重要度上限 -->
+          <line x1="8%" y1="5%" x2="10%" y2="5%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="5%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">5+</text>
+        </g>
+        
+        <!-- Y轴刻度线 - 第四象限放大状态 (重要度 1-5) -->
+        <g v-if="activeQuadrant === 4">
+          <!-- 刻度线 1 -->
+          <line x1="8%" y1="90%" x2="10%" y2="90%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="90%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">1</text>
+          
+          <!-- 刻度线 2 -->
+          <line x1="8%" y1="73%" x2="10%" y2="73%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="73%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">2</text>
+          
+          <!-- 刻度线 3 -->
+          <line x1="8%" y1="56%" x2="10%" y2="56%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="56%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">3</text>
+          
+          <!-- 刻度线 4 -->
+          <line x1="8%" y1="39%" x2="10%" y2="39%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="39%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">4</text>
+          
+          <!-- 刻度线 5 -->
+          <line x1="8%" y1="22%" x2="10%" y2="22%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="22%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">5</text>
+          
+          <!-- 刻度线 重要度上限 -->
+          <line x1="8%" y1="5%" x2="10%" y2="5%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="5%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">5+</text>
         </g>
         
         <!-- 象限标签 - 默认状态 -->
@@ -199,13 +415,12 @@
       
       <!-- 任务点 -->
       <div 
-        v-for="task in tasks" 
+        v-for="task in activeQuadrant === 0 ? tasks : tasksInActiveQuadrant" 
         :key="task.id"
         class="absolute rounded-full shadow-md transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-700 hover:scale-125 z-10 animate-pop-in"
         :class="[
           getTaskColor(task),
-          isTaskInActiveQuadrant(task) ? 'scale-150 z-20 ring-2 ring-white' : 'scale-100',
-          activeQuadrant !== 0 && !isTaskInActiveQuadrant(task) ? 'opacity-0' : 'opacity-100'
+          isTaskInActiveQuadrant(task) ? 'scale-150 z-20 ring-2 ring-white' : 'scale-100'
         ]"
         :style="{
           left: getTaskPositionX(task),
@@ -348,6 +563,12 @@ function isTaskInActiveQuadrant(task) {
   const quadrant = getTaskQuadrant(task);
   return quadrant === activeQuadrant.value;
 }
+
+// 获取当前象限中的任务
+const tasksInActiveQuadrant = computed(() => {
+  if (activeQuadrant.value === 0) return [];
+  return props.tasks.filter(task => getTaskQuadrant(task) === activeQuadrant.value);
+});
 
 // 获取任务所在象限
 function getTaskQuadrant(task) {
