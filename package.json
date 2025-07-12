@@ -1,0 +1,25 @@
+{
+  "name": "quadrant-task-manager",
+  "version": "1.0.0",
+  "description": "响应式四象限任务管理系统",
+  "main": "server/index.js",
+  "scripts": {
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "build": "cd client && npm run build"
+  },
+  "keywords": [
+    "vue3",
+    "express",
+    "mysql",
+    "tailwindcss",
+    "quadrant"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

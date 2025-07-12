@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-grid">
+  <rect x="3" y="3" width="7" height="7" fill="#3B82F6" stroke="#3B82F6"></rect>
+  <rect x="14" y="3" width="7" height="7" fill="#8B5CF6" stroke="#8B5CF6"></rect>
+  <rect x="3" y="14" width="7" height="7" fill="#EC4899" stroke="#EC4899"></rect>
+  <rect x="14" y="14" width="7" height="7" fill="#9CA3AF" stroke="#9CA3AF"></rect>
+</svg>
