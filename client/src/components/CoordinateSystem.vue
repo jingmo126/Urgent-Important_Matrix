@@ -115,8 +115,8 @@
           <text x="27%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">2</text>
           
           <!-- 刻度线 5 -->
-          <line x1="53%" y1="90%" x2="53%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
-          <text x="53%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">5</text>
+          <line x1="50%" y1="90%" x2="50%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="50%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">5</text>
           
           <!-- 刻度线 8 -->
           <line x1="78%" y1="90%" x2="78%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
@@ -246,8 +246,8 @@
           <text x="6%" y="73%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">2</text>
           
           <!-- 刻度线 5 -->
-          <line x1="8%" y1="48%" x2="10%" y2="48%" stroke="#3B82F6" stroke-width="1.5" />
-          <text x="6%" y="48%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">5</text>
+          <line x1="8%" y1="50%" x2="10%" y2="50%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="6%" y="50%" text-anchor="middle" dominant-baseline="middle" class="text-xs fill-blue-500">5</text>
           
           <!-- 刻度线 8 -->
           <line x1="8%" y1="22%" x2="10%" y2="22%" stroke="#3B82F6" stroke-width="1.5" />
@@ -575,7 +575,10 @@ function getTaskQuadrant(task) {
   const importance = task.importance;
   const urgency = task.urgency;
   
-  if (importance >= 5 && urgency >= 5) return 1; // 重要紧急（第一象限，右上角）
+  // 特殊处理坐标值为[5,5]的点，只在第一象限显示
+  if (importance === 5 && urgency === 5) return 1; // [5,5]的点只在第一象限显示
+  
+  if (importance > 5 && urgency >= 5) return 1; // 重要紧急（第一象限，右上角）
   if (importance >= 5 && urgency < 5) return 2; // 重要不紧急（第二象限，左上角）
   if (importance < 5 && urgency < 5) return 3; // 不重要不紧急（第三象限，左下角）
   if (importance < 5 && urgency >= 5) return 4; // 不重要但紧急（第四象限，右下角）
@@ -627,14 +630,22 @@ function getTaskPositionX(task) {
     }
     
     // 在放大视图中，将任务点映射到更集中的可见区域（25%-75%）
-    // 对于右侧象限（1和4），urgency值从5到10
-    // 对于左侧象限（2和3），urgency值从1到5
-    if (quadrant === 1 || quadrant === 4) { // 右侧象限（紧急）
+    // 第一象限：横轴范围5-10
+    // 第二象限：横轴范围0-5
+    // 第三象限：横轴范围0-5
+    // 第四象限：横轴范围5-10
+    if (quadrant === 1) { // 第一象限（右上角）
       // 将urgency 5-10映射到25%-75%
       return `${25 + (task.urgency - 5) * (50 / 5)}%`;
-    } else if (quadrant === 2 || quadrant === 3) { // 左侧象限（不紧急）
-      // 将urgency 1-5映射到25%-75%
-      return `${25 + (task.urgency - 1) * (50 / 4)}%`;
+    } else if (quadrant === 2) { // 第二象限（左上角）
+      // 将urgency 0-5映射到25%-75%
+      return `${25 + task.urgency * (50 / 5)}%`;
+    } else if (quadrant === 3) { // 第三象限（左下角）
+      // 将urgency 0-5映射到25%-75%
+      return `${25 + task.urgency * (50 / 5)}%`;
+    } else if (quadrant === 4) { // 第四象限（右下角）
+      // 将urgency 5-10映射到25%-75%
+      return `${25 + (task.urgency - 5) * (50 / 5)}%`;
     }
   }
   
@@ -656,14 +667,16 @@ function getTaskPositionY(task) {
     }
     
     // 在放大视图中，将任务点映射到更集中的可见区域（25%-75%）
-    // 对于上方象限（1和2），importance值从5到10
-    // 对于下方象限（3和4），importance值从1到5
+    // 第一象限：纵轴范围5-10
+    // 第二象限：纵轴范围5-10
+    // 第三象限：纵轴范围0-5
+    // 第四象限：纵轴范围0-5
     if (quadrant === 1 || quadrant === 2) { // 上方象限（重要）
       // 将importance 5-10映射到25%-75%
       return `${25 + (10 - task.importance) * (50 / 5)}%`;
     } else if (quadrant === 3 || quadrant === 4) { // 下方象限（不重要）
-      // 将importance 1-5映射到25%-75%
-      return `${25 + (5 - task.importance) * (50 / 4)}%`;
+      // 将importance 0-5映射到25%-75%
+      return `${25 + (5 - task.importance) * (50 / 5)}%`;
     }
   }
   

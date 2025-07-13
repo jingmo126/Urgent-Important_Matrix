@@ -178,6 +178,12 @@ function calculatePriority() {
 // 保存任务
 function saveTask() {
   const task = { ...taskForm.value };
+  
+  // 处理空日期，确保发送null而不是空字符串
+  if (task.dueDate === '') {
+    task.dueDate = null;
+  }
+  
   task.priority = calculatePriority();
   emit('save', task);
 }
