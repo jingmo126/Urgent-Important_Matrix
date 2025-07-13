@@ -31,12 +31,12 @@
         <!-- 象限背景 - 默认状态 -->
         <g v-if="activeQuadrant === 0">
           <rect 
-            x="10%" y="5%" width="40%" height="45%" 
+            x="50%" y="5%" width="45%" height="45%" 
             class="fill-blue-50 transition-all duration-500 cursor-pointer opacity-30 hover:opacity-50 stroke-blue-200 stroke-1"
             @mouseenter="setActiveQuadrant(1)" 
           />
           <rect 
-            x="50%" y="5%" width="45%" height="45%" 
+            x="10%" y="5%" width="40%" height="45%" 
             class="fill-blue-50 transition-all duration-500 cursor-pointer opacity-30 hover:opacity-50 stroke-blue-200 stroke-1"
             @mouseenter="setActiveQuadrant(2)" 
           />
@@ -369,19 +369,19 @@
         <!-- 象限标签 - 默认状态 -->
         <g v-if="activeQuadrant === 0">
           <text 
-            x="75%" y="25%" 
+            x="25%" y="25%" 
             class="text-sm font-medium fill-important transition-all duration-500"
           >重要不紧急</text>
           <text 
-            x="75%" y="75%" 
+            x="25%" y="75%" 
             class="text-sm font-medium fill-gray-500 transition-all duration-500"
           >不重要不紧急</text>
           <text 
-            x="25%" y="25%" 
+            x="75%" y="25%" 
             class="text-sm font-medium fill-danger transition-all duration-500"
           >重要紧急</text>
           <text 
-            x="25%" y="75%" 
+            x="75%" y="75%" 
             class="text-sm font-medium fill-urgent transition-all duration-500"
           >不重要但紧急</text>
         </g>
@@ -403,14 +403,14 @@
           v-if="activeQuadrant === 3"
           x="50%" y="15%" 
           text-anchor="middle"
-          class="text-xl font-bold fill-urgent transition-all duration-700 animate-pulse-slow"
-        >不重要但紧急</text>
+          class="text-xl font-bold fill-gray-500 transition-all duration-700 animate-pulse-slow"
+        >不重要不紧急</text>
         <text 
           v-if="activeQuadrant === 4"
           x="50%" y="15%" 
           text-anchor="middle"
-          class="text-xl font-bold fill-gray-500 transition-all duration-700 animate-pulse-slow"
-        >不重要不紧急</text>
+          class="text-xl font-bold fill-urgent transition-all duration-700 animate-pulse-slow"
+        >不重要但紧急</text>
       </svg>
       
       <!-- 任务点 -->
@@ -575,10 +575,10 @@ function getTaskQuadrant(task) {
   const importance = task.importance;
   const urgency = task.urgency;
   
-  if (importance >= 5 && urgency >= 5) return 1; // 重要紧急（第一象限，左上角）
-  if (importance >= 5 && urgency < 5) return 2; // 重要不紧急（第二象限，右上角）
-  if (importance < 5 && urgency >= 5) return 3; // 不重要但紧急（第三象限，左下角）
-  if (importance < 5 && urgency < 5) return 4; // 不重要不紧急（第四象限，右下角）
+  if (importance >= 5 && urgency >= 5) return 1; // 重要紧急（第一象限，右上角）
+  if (importance >= 5 && urgency < 5) return 2; // 重要不紧急（第二象限，左上角）
+  if (importance < 5 && urgency < 5) return 3; // 不重要不紧急（第三象限，左下角）
+  if (importance < 5 && urgency >= 5) return 4; // 不重要但紧急（第四象限，右下角）
   return 0; // 默认返回全局视图
 }
 
@@ -627,12 +627,12 @@ function getTaskPositionX(task) {
     }
     
     // 在放大视图中，将任务点映射到更集中的可见区域（25%-75%）
-    // 对于左侧象限（1和3），urgency值从5到10
-    // 对于右侧象限（2和4），urgency值从1到5
-    if (quadrant === 1 || quadrant === 3) { // 左侧象限（紧急）
+    // 对于右侧象限（1和4），urgency值从5到10
+    // 对于左侧象限（2和3），urgency值从1到5
+    if (quadrant === 1 || quadrant === 4) { // 右侧象限（紧急）
       // 将urgency 5-10映射到25%-75%
       return `${25 + (task.urgency - 5) * (50 / 5)}%`;
-    } else if (quadrant === 2 || quadrant === 4) { // 右侧象限（不紧急）
+    } else if (quadrant === 2 || quadrant === 3) { // 左侧象限（不紧急）
       // 将urgency 1-5映射到25%-75%
       return `${25 + (task.urgency - 1) * (50 / 4)}%`;
     }
@@ -670,6 +670,7 @@ function getTaskPositionY(task) {
   return `${50}%`; // 默认返回中心位置
 }
 
+
 // 获取提示框X坐标位置
 function getTooltipPositionX(task) {
   if (activeQuadrant.value === 0) {
@@ -683,12 +684,12 @@ function getTooltipPositionX(task) {
       return '50%'; // 非当前象限的任务不应显示，但为防止错误，返回中心位置
     }
     
-    if (quadrant === 1 || quadrant === 3) { // 左侧象限（紧急）
+    if (quadrant === 1 || quadrant === 4) { // 右侧象限（紧急）
       // 将urgency 5-10映射到提示框位置
       const position = 25 + (task.urgency - 5) * (50 / 5);
       // 确保提示框不会超出边界
       return `${Math.min(70, position + 5)}%`;
-    } else if (quadrant === 2 || quadrant === 4) { // 右侧象限（不紧急）
+    } else if (quadrant === 2 || quadrant === 3) { // 左侧象限（不紧急）
       // 将urgency 1-5映射到提示框位置
       const position = 25 + (task.urgency - 1) * (50 / 4);
       // 确保提示框不会超出边界
