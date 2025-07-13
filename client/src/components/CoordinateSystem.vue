@@ -379,7 +379,7 @@
           <text 
             x="25%" y="25%" 
             class="text-sm font-medium fill-danger transition-all duration-500"
-          >重要且紧急</text>
+          >重要紧急</text>
           <text 
             x="25%" y="75%" 
             class="text-sm font-medium fill-urgent transition-all duration-500"
@@ -392,7 +392,7 @@
           x="50%" y="15%" 
           text-anchor="middle"
           class="text-xl font-bold fill-danger transition-all duration-700 animate-pulse-slow"
-        >重要且紧急</text>
+        >重要紧急</text>
         <text 
           v-if="activeQuadrant === 2"
           x="50%" y="15%" 
@@ -420,15 +420,15 @@
         class="absolute rounded-full shadow-md transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-700 hover:scale-125 z-10 animate-pop-in"
         :class="[
           getTaskColor(task),
-          isTaskInActiveQuadrant(task) ? 'scale-150 z-20 ring-2 ring-white' : 'scale-100'
+          activeQuadrant !== 0 ? 'scale-150 z-20 ring-2 ring-white' : 'scale-100'
         ]"
         :style="{
-          left: getTaskPositionX(task),
-          top: getTaskPositionY(task),
-          width: isTaskInActiveQuadrant(task) ? '36px' : '24px',
-          height: isTaskInActiveQuadrant(task) ? '36px' : '24px',
-          'animation-delay': task.id * 100 + 'ms'
-        }"
+            left: getTaskPositionX(task),
+            top: getTaskPositionY(task),
+            width: activeQuadrant !== 0 ? '36px' : '24px',
+            height: activeQuadrant !== 0 ? '36px' : '24px',
+            'animation-delay': task.id * 100 + 'ms'
+          }"
         @click="editTask(task)"
         @mouseenter="hoveredTask = task"
         @mouseleave="hoveredTask = null"
@@ -457,7 +457,7 @@
       
       <!-- 任务信息提示框 -->
       <div 
-        v-if="hoveredTask && (activeQuadrant === 0 || isTaskInActiveQuadrant(hoveredTask))" 
+        v-if="hoveredTask && (activeQuadrant === 0 || getTaskQuadrant(hoveredTask) === activeQuadrant)" 
         class="absolute z-30 bg-white rounded-md shadow-lg p-4 w-64 text-sm animate-fade-in border-l-4 transition-all duration-700"
         :class="getTaskBorderColor(hoveredTask)"
         :style="{
@@ -575,10 +575,11 @@ function getTaskQuadrant(task) {
   const importance = task.importance;
   const urgency = task.urgency;
   
-  if (importance >= 5 && urgency >= 5) return 1; // 重要且紧急
-  if (importance >= 5 && urgency < 5) return 2; // 重要不紧急
-  if (importance < 5 && urgency >= 5) return 3; // 不重要但紧急
-  return 4; // 不重要不紧急
+  if (importance >= 5 && urgency >= 5) return 1; // 重要紧急（第一象限，左上角）
+  if (importance >= 5 && urgency < 5) return 2; // 重要不紧急（第二象限，右上角）
+  if (importance < 5 && urgency >= 5) return 3; // 不重要但紧急（第三象限，左下角）
+  if (importance < 5 && urgency < 5) return 4; // 不重要不紧急（第四象限，右下角）
+  return 0; // 默认返回全局视图
 }
 
 // 根据任务的优先级获取颜色
@@ -616,23 +617,28 @@ function getTaskPositionX(task) {
   if (activeQuadrant.value === 0) {
     // 默认视图下的位置
     return `${10 + (task.urgency - 1) * 8.5}%`;
-  } else if (isTaskInActiveQuadrant(task)) {
+  } else {
     // 放大视图下的位置
     const quadrant = getTaskQuadrant(task);
     
-    // 在放大视图中，将任务点映射到整个可见区域（5%-95%）
-    // 对于左侧象限（1和3），urgency值从1到5
-    // 对于右侧象限（2和4），urgency值从6到10
-    if (quadrant === 1 || quadrant === 3) { // 左侧象限
-      // 将urgency 1-5映射到5%-95%
-      return `${5 + (task.urgency - 1) * (90 / 5)}%`;
-    } else { // 右侧象限
-      // 将urgency 6-10映射到5%-95%
-      return `${5 + (task.urgency - 6) * (90 / 5)}%`;
+    // 确保只计算当前活动象限的任务位置
+    if (quadrant !== activeQuadrant.value) {
+      return '50%'; // 非当前象限的任务不应显示，但为防止错误，返回中心位置
+    }
+    
+    // 在放大视图中，将任务点映射到更集中的可见区域（25%-75%）
+    // 对于左侧象限（1和3），urgency值从5到10
+    // 对于右侧象限（2和4），urgency值从1到5
+    if (quadrant === 1 || quadrant === 3) { // 左侧象限（紧急）
+      // 将urgency 5-10映射到25%-75%
+      return `${25 + (task.urgency - 5) * (50 / 5)}%`;
+    } else if (quadrant === 2 || quadrant === 4) { // 右侧象限（不紧急）
+      // 将urgency 1-5映射到25%-75%
+      return `${25 + (task.urgency - 1) * (50 / 4)}%`;
     }
   }
   
-  return `${10 + (task.urgency - 1) * 8.5}%`; // 默认返回
+  return `${50}%`; // 默认返回中心位置
 }
 
 // 获取任务Y坐标位置
@@ -640,23 +646,28 @@ function getTaskPositionY(task) {
   if (activeQuadrant.value === 0) {
     // 默认视图下的位置
     return `${90 - (task.importance - 1) * 8.5}%`;
-  } else if (isTaskInActiveQuadrant(task)) {
+  } else {
     // 放大视图下的位置
     const quadrant = getTaskQuadrant(task);
     
-    // 在放大视图中，将任务点映射到整个可见区域（5%-90%）
-    // 对于上方象限（1和2），importance值从6到10
+    // 确保只计算当前活动象限的任务位置
+    if (quadrant !== activeQuadrant.value) {
+      return '50%'; // 非当前象限的任务不应显示，但为防止错误，返回中心位置
+    }
+    
+    // 在放大视图中，将任务点映射到更集中的可见区域（25%-75%）
+    // 对于上方象限（1和2），importance值从5到10
     // 对于下方象限（3和4），importance值从1到5
-    if (quadrant === 1 || quadrant === 2) { // 上方象限
-      // 将importance 6-10映射到5%-90%
-      return `${5 + (10 - task.importance) * (85 / 5)}%`;
-    } else { // 下方象限
-      // 将importance 1-5映射到5%-90%
-      return `${5 + (5 - task.importance) * (85 / 5)}%`;
+    if (quadrant === 1 || quadrant === 2) { // 上方象限（重要）
+      // 将importance 5-10映射到25%-75%
+      return `${25 + (10 - task.importance) * (50 / 5)}%`;
+    } else if (quadrant === 3 || quadrant === 4) { // 下方象限（不重要）
+      // 将importance 1-5映射到25%-75%
+      return `${25 + (5 - task.importance) * (50 / 4)}%`;
     }
   }
   
-  return `${90 - (task.importance - 1) * 8.5}%`; // 默认返回
+  return `${50}%`; // 默认返回中心位置
 }
 
 // 获取提示框X坐标位置
@@ -667,17 +678,23 @@ function getTooltipPositionX(task) {
     // 放大视图下，提示框位置需要调整
     const quadrant = getTaskQuadrant(task);
     
-    if (quadrant === 1 || quadrant === 3) { // 左侧象限
-      // 将urgency 1-5映射到提示框位置
-      const position = 5 + (task.urgency - 1) * (90 / 5);
-      // 确保提示框不会超出边界
-      return `${Math.min(70, position + 10)}%`;
-    } else { // 右侧象限
-      // 将urgency 6-10映射到提示框位置
-      const position = 5 + (task.urgency - 6) * (90 / 5);
-      // 确保提示框不会超出边界
-      return `${Math.min(70, position + 10)}%`;
+    // 确保只计算当前活动象限的任务提示框位置
+    if (quadrant !== activeQuadrant.value) {
+      return '50%'; // 非当前象限的任务不应显示，但为防止错误，返回中心位置
     }
+    
+    if (quadrant === 1 || quadrant === 3) { // 左侧象限（紧急）
+      // 将urgency 5-10映射到提示框位置
+      const position = 25 + (task.urgency - 5) * (50 / 5);
+      // 确保提示框不会超出边界
+      return `${Math.min(70, position + 5)}%`;
+    } else if (quadrant === 2 || quadrant === 4) { // 右侧象限（不紧急）
+      // 将urgency 1-5映射到提示框位置
+      const position = 25 + (task.urgency - 1) * (50 / 4);
+      // 确保提示框不会超出边界
+      return `${Math.min(70, position + 5)}%`;
+    }
+    return `50%`; // 默认返回中心位置
   }
 }
 
@@ -689,24 +706,30 @@ function getTooltipPositionY(task) {
     // 放大视图下，提示框位置需要调整
     const quadrant = getTaskQuadrant(task);
     
-    if (quadrant === 1 || quadrant === 2) { // 上方象限
-      // 将importance 6-10映射到提示框位置
-      const position = 5 + (10 - task.importance) * (85 / 5);
-      // 确保提示框不会超出边界
-      return `${Math.min(70, position + 10)}%`;
-    } else { // 下方象限
-      // 将importance 1-5映射到提示框位置
-      const position = 5 + (5 - task.importance) * (85 / 5);
-      // 确保提示框不会超出边界
-      return `${Math.min(70, position + 10)}%`;
+    // 确保只计算当前活动象限的任务提示框位置
+    if (quadrant !== activeQuadrant.value) {
+      return '50%'; // 非当前象限的任务不应显示，但为防止错误，返回中心位置
     }
+    
+    if (quadrant === 1 || quadrant === 2) { // 上方象限（重要）
+      // 将importance 5-10映射到提示框位置
+      const position = 25 + (10 - task.importance) * (50 / 5);
+      // 确保提示框不会超出边界
+      return `${Math.min(70, position + 5)}%`;
+    } else if (quadrant === 3 || quadrant === 4) { // 下方象限（不重要）
+      // 将importance 1-5映射到提示框位置
+      const position = 25 + (5 - task.importance) * (50 / 4);
+      // 确保提示框不会超出边界
+      return `${Math.min(70, position + 5)}%`;
+    }
+    return `50%`; // 默认返回中心位置
   }
 }
 
 // 获取象限名称
 function getQuadrantName(quadrant) {
   switch (quadrant) {
-    case 1: return '重要且紧急';
+    case 1: return '重要紧急';
     case 2: return '重要不紧急';
     case 3: return '不重要但紧急';
     case 4: return '不重要不紧急';
