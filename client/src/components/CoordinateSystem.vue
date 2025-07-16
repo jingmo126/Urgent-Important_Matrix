@@ -127,31 +127,31 @@
           <text x="95%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">10</text>
         </g>
         
-        <!-- X轴刻度线 - 第一象限放大状态 (紧急度 1-5) -->
+        <!-- X轴刻度线 - 第一象限放大状态 (紧急度 5-10) -->
         <g v-if="activeQuadrant === 1">
-          <!-- 刻度线 1 -->
-          <line x1="5%" y1="90%" x2="5%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
-          <text x="5%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">1</text>
-          
-          <!-- 刻度线 2 -->
-          <line x1="23%" y1="90%" x2="23%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
-          <text x="23%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">2</text>
-          
-          <!-- 刻度线 3 -->
-          <line x1="41%" y1="90%" x2="41%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
-          <text x="41%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">3</text>
-          
-          <!-- 刻度线 4 -->
-          <line x1="59%" y1="90%" x2="59%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
-          <text x="59%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">4</text>
-          
           <!-- 刻度线 5 -->
-          <line x1="77%" y1="90%" x2="77%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
-          <text x="77%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">5</text>
+          <line x1="5%" y1="90%" x2="5%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="5%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">5</text>
           
-          <!-- 刻度线 紧急度上限 -->
+          <!-- 刻度线 6 -->
+          <line x1="23%" y1="90%" x2="23%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="23%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">6</text>
+          
+          <!-- 刻度线 7 -->
+          <line x1="41%" y1="90%" x2="41%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="41%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">7</text>
+          
+          <!-- 刻度线 8 -->
+          <line x1="59%" y1="90%" x2="59%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="59%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">8</text>
+          
+          <!-- 刻度线 9 -->
+          <line x1="77%" y1="90%" x2="77%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
+          <text x="77%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">9</text>
+          
+          <!-- 刻度线 10 -->
           <line x1="95%" y1="90%" x2="95%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
-          <text x="95%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">5+</text>
+          <text x="95%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">10</text>
         </g>
         
         <!-- X轴刻度线 - 第二象限放大状态 (紧急度 6-10) -->
