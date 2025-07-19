@@ -94,7 +94,7 @@
           <div>
             <label class="label">计算优先级: {{ calculatePriority().toFixed(1) }}</label>
             <div class="bg-gray-100 rounded-md p-2 text-sm text-gray-600">
-              优先级 = 重要度({{ taskForm.importance }}) × 0.4 + 紧急度({{ taskForm.urgency }}) × 0.6
+              优先级 = (重要度({{ taskForm.importance }}) + 紧急度({{ taskForm.urgency }})) / 2
             </div>
           </div>
         </div>
@@ -206,7 +206,7 @@ function getCurrentMoodLabel() {
 
 // 计算优先级
 function calculatePriority() {
-  return taskForm.value.importance * 0.4 + taskForm.value.urgency * 0.6;
+  return (taskForm.value.importance + taskForm.value.urgency) / 2;
 }
 
 // 保存任务

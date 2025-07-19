@@ -127,11 +127,11 @@
           <text x="95%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">10</text>
         </g>
         
-        <!-- X轴刻度线 - 第一象限放大状态 (紧急度 5-10) -->
+        <!-- X轴刻度线 - 第一象限放大状态 (紧急度 6-10) -->
         <g v-if="activeQuadrant === 1">
-          <!-- 刻度线 5 -->
+          <!-- 刻度线 6 -->
           <line x1="5%" y1="90%" x2="5%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
-          <text x="5%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">5</text>
+          <text x="5%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">6</text>
           
           <!-- 刻度线 6 -->
           <line x1="23%" y1="90%" x2="23%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
@@ -154,31 +154,31 @@
           <text x="95%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">10</text>
         </g>
         
-        <!-- X轴刻度线 - 第二象限放大状态 (紧急度 6-10) -->
+        <!-- X轴刻度线 - 第二象限放大状态 (紧急度 1-5) -->
         <g v-if="activeQuadrant === 2">
-          <!-- 刻度线 6 -->
+          <!-- 刻度线 1 -->
           <line x1="5%" y1="90%" x2="5%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
-          <text x="5%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">6</text>
+          <text x="5%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">1</text>
           
-          <!-- 刻度线 7 -->
+          <!-- 刻度线 2 -->
           <line x1="23%" y1="90%" x2="23%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
-          <text x="23%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">7</text>
+          <text x="23%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">2</text>
           
-          <!-- 刻度线 8 -->
+          <!-- 刻度线 3 -->
           <line x1="41%" y1="90%" x2="41%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
-          <text x="41%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">8</text>
+          <text x="41%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">3</text>
           
-          <!-- 刻度线 9 -->
+          <!-- 刻度线 4 -->
           <line x1="59%" y1="90%" x2="59%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
-          <text x="59%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">9</text>
+          <text x="59%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">4</text>
           
-          <!-- 刻度线 10 -->
+          <!-- 刻度线 5 -->
           <line x1="77%" y1="90%" x2="77%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
-          <text x="77%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">10</text>
+          <text x="77%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">5</text>
           
           <!-- 刻度线 紧急度上限 -->
           <line x1="95%" y1="90%" x2="95%" y2="92%" stroke="#3B82F6" stroke-width="1.5" />
-          <text x="95%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">10+</text>
+          <text x="95%" y="96%" text-anchor="middle" class="text-xs fill-blue-500">5+</text>
         </g>
         
         <!-- X轴刻度线 - 第三象限放大状态 (紧急度 1-5) -->
@@ -651,13 +651,13 @@ function getTaskQuadrant(task) {
   const importance = task.importance;
   const urgency = task.urgency;
   
-  // 特殊处理坐标值为[5,5]的点，只在第一象限显示
-  if (importance === 5 && urgency === 5) return 1; // [5,5]的点只在第一象限显示
+  // 特殊处理坐标值为[5,5]的点，放在第三象限
+  if (importance === 5 && urgency === 5) return 3; // [5,5]的点放在第三象限
   
-  if (importance > 5 && urgency >= 5) return 1; // 重要紧急（第一象限，右上角）
-  if (importance >= 5 && urgency < 5) return 2; // 重要不紧急（第二象限，左上角）
-  if (importance < 5 && urgency < 5) return 3; // 不重要不紧急（第三象限，左下角）
-  if (importance < 5 && urgency >= 5) return 4; // 不重要但紧急（第四象限，右下角）
+  if (importance > 5 && urgency > 5) return 1; // 重要紧急（第一象限，右上角）
+  if (importance > 5 && urgency <= 5) return 2; // 重要不紧急（第二象限，左上角）
+  if (importance <= 5 && urgency <= 5) return 3; // 不重要不紧急（第三象限，左下角）
+  if (importance <= 5 && urgency > 5) return 4; // 不重要但紧急（第四象限，右下角）
   return 0; // 默认返回全局视图
 }
 
@@ -693,6 +693,11 @@ function getPriorityBarColor(task) {
 
 // 获取任务X坐标位置
 function getTaskPositionX(task) {
+  // 特殊处理[5,5]坐标点，仅在默认视图下显示在中央虚线交汇处
+  if (task.importance === 5 && task.urgency === 5 && activeQuadrant.value === 0) {
+    return '50%';
+  }
+  
   if (activeQuadrant.value === 0) {
     // 默认视图下的位置
     return `${10 + (task.urgency - 1) * 8.5}%`;
@@ -711,17 +716,17 @@ function getTaskPositionX(task) {
     // 第三象限：横轴范围0-5
     // 第四象限：横轴范围5-10
     if (quadrant === 1) { // 第一象限（右上角）
-      // 将urgency 5-10映射到25%-75%
-      return `${25 + (task.urgency - 5) * (50 / 5)}%`;
+      // 将urgency 6-10映射到25%-75%
+      return `${25 + (task.urgency - 6) * (50 / 4)}%`;
     } else if (quadrant === 2) { // 第二象限（左上角）
-      // 将urgency 0-5映射到25%-75%
-      return `${25 + task.urgency * (50 / 5)}%`;
+      // 将urgency 1-5映射到25%-75%
+      return `${25 + (task.urgency - 1) * (50 / 4)}%`;
     } else if (quadrant === 3) { // 第三象限（左下角）
-      // 将urgency 0-5映射到25%-75%
-      return `${25 + task.urgency * (50 / 5)}%`;
+      // 将urgency 1-5映射到25%-75%
+      return `${25 + (task.urgency - 1) * (50 / 4)}%`;
     } else if (quadrant === 4) { // 第四象限（右下角）
-      // 将urgency 5-10映射到25%-75%
-      return `${25 + (task.urgency - 5) * (50 / 5)}%`;
+      // 将urgency 6-10映射到25%-75%
+      return `${25 + (task.urgency - 6) * (50 / 4)}%`;
     }
   }
   
@@ -730,6 +735,11 @@ function getTaskPositionX(task) {
 
 // 获取任务Y坐标位置
 function getTaskPositionY(task) {
+  // 特殊处理[5,5]坐标点，仅在默认视图下显示在中央虚线交汇处
+  if (task.importance === 5 && task.urgency === 5 && activeQuadrant.value === 0) {
+    return '50%';
+  }
+  
   if (activeQuadrant.value === 0) {
     // 默认视图下的位置
     return `${90 - (task.importance - 1) * 8.5}%`;
@@ -748,11 +758,11 @@ function getTaskPositionY(task) {
     // 第三象限：纵轴范围0-5
     // 第四象限：纵轴范围0-5
     if (quadrant === 1 || quadrant === 2) { // 上方象限（重要）
-      // 将importance 5-10映射到25%-75%
-      return `${25 + (10 - task.importance) * (50 / 5)}%`;
+      // 将importance 6-10映射到25%-75%
+      return `${25 + (10 - task.importance) * (50 / 4)}%`;
     } else if (quadrant === 3 || quadrant === 4) { // 下方象限（不重要）
-      // 将importance 0-5映射到25%-75%
-      return `${25 + (5 - task.importance) * (50 / 5)}%`;
+      // 将importance 1-5映射到25%-75%
+      return `${25 + (5 - task.importance) * (50 / 4)}%`;
     }
   }
   
