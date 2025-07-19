@@ -72,6 +72,24 @@
             >
           </div>
           
+          <!-- 心情选择 -->
+          <div>
+            <label class="label">心情: {{ getCurrentMoodLabel() }}</label>
+            <div class="flex space-x-2 mt-2">
+              <button
+                v-for="mood in moodOptions"
+                :key="mood.value"
+                type="button"
+                @click="taskForm.mood = mood.value"
+                class="w-12 h-12 rounded-lg border-2 transition-all duration-200 hover:scale-110 flex items-center justify-center text-xl"
+                :class="taskForm.mood === mood.value ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'"
+                :title="mood.label"
+              >
+                {{ mood.emoji }}
+              </button>
+            </div>
+          </div>
+          
           <!-- 优先级（只读） -->
           <div>
             <label class="label">计算优先级: {{ calculatePriority().toFixed(1) }}</label>
@@ -148,7 +166,17 @@ const taskForm = ref({
   importance: 5,
   urgency: 5,
   dueDate: '',
+  mood: 'smile'
 });
+
+// 心情选项
+const moodOptions = [
+  { value: 'smile', label: '开心', emoji: '😊' },
+  { value: 'cry', label: '难过', emoji: '😢' },
+  { value: 'struggle', label: '奋斗', emoji: '💪' },
+  { value: 'shy', label: '害羞', emoji: '😳' },
+  { value: 'thinking', label: '沉思', emoji: '🤔' }
+];
 
 // 删除确认
 const showDeleteConfirm = ref(false);
@@ -169,6 +197,12 @@ onMounted(() => {
     }
   }
 });
+
+// 获取当前心情标签
+function getCurrentMoodLabel() {
+  const currentMood = moodOptions.find(mood => mood.value === taskForm.value.mood);
+  return currentMood ? currentMood.label : '开心';
+}
 
 // 计算优先级
 function calculatePriority() {

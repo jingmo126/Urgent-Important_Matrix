@@ -413,34 +413,39 @@
         >不重要但紧急</text>
       </svg>
       
-      <!-- 任务点 -->
+      <!-- 任务点组 -->
       <div 
-        v-for="task in activeQuadrant === 0 ? tasks : tasksInActiveQuadrant" 
-        :key="task.id"
+        v-for="group in taskGroups" 
+        :key="`group-${group.x}-${group.y}`"
         class="absolute rounded-full shadow-md transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-700 hover:scale-125 z-10 animate-pop-in"
         :class="[
-          getTaskColor(task),
+          group.tasks.length === 1 ? getTaskColor(group.tasks[0]) : 'bg-blue-500',
           activeQuadrant !== 0 ? 'scale-150 z-20 ring-2 ring-white' : 'scale-100'
         ]"
         :style="{
-            left: getTaskPositionX(task),
-            top: getTaskPositionY(task),
+            left: group.x,
+            top: group.y,
             width: activeQuadrant !== 0 ? '36px' : '24px',
             height: activeQuadrant !== 0 ? '36px' : '24px',
-            'animation-delay': task.id * 100 + 'ms'
+            'animation-delay': group.tasks[0].id * 100 + 'ms'
           }"
-        @click="editTask(task)"
-        @mouseenter="hoveredTask = task"
-        @mouseleave="hoveredTask = null"
+        @click="group.tasks.length === 1 ? editTask(group.tasks[0]) : showTaskList(group)"
+         @mouseenter="handleGroupMouseEnter(group)"
+         @mouseleave="handleGroupMouseLeave()"
       >
-        <span class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-xs font-bold text-white">
-          {{ task.id }}
+        <!-- 单个任务显示心情图标 -->
+        <span v-if="group.tasks.length === 1" class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-lg">
+          {{ moodEmojis[group.tasks[0].mood] || moodEmojis.smile }}
+        </span>
+        <!-- 多个任务显示数量 -->
+        <span v-else class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-xs font-bold text-white">
+          {{ group.tasks.length }}
         </span>
         <!-- 优先级指示器 -->
         <div 
           class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 h-1 rounded-full transition-all duration-700"
-          :class="getPriorityBarColor(task)"
-          :style="{width: `${Math.max(20, task.priority * 4)}px`}"
+          :class="group.tasks.length === 1 ? getPriorityBarColor(group.tasks[0]) : 'bg-blue-300'"
+          :style="{width: `${Math.max(20, group.tasks.length === 1 ? group.tasks[0].priority * 4 : 32)}px`}"
         ></div>
       </div>
       
@@ -455,7 +460,7 @@
         <span>当前正在查看<span class="font-bold">{{ getQuadrantName(activeQuadrant) }}</span>象限，<span class="font-bold">将鼠标移出整个坐标系</span>可返回全局视图</span>
       </div>
       
-      <!-- 任务信息提示框 -->
+      <!-- 单任务信息提示框 -->
       <div 
         v-if="hoveredTask && (activeQuadrant === 0 || getTaskQuadrant(hoveredTask) === activeQuadrant)" 
         class="absolute z-30 bg-white rounded-md shadow-lg p-4 w-64 text-sm animate-fade-in border-l-4 transition-all duration-700"
@@ -465,7 +470,10 @@
           top: getTooltipPositionY(hoveredTask)
         }"
       >
-        <div class="font-medium text-gray-900 text-base">{{ hoveredTask.title }}</div>
+        <div class="font-medium text-gray-900 text-base flex items-center">
+          <span class="mr-2">{{ moodEmojis[hoveredTask.mood] || moodEmojis.smile }}</span>
+          {{ hoveredTask.title }}
+        </div>
         <div v-if="hoveredTask.description" class="text-gray-600 mt-2 text-xs">{{ hoveredTask.description }}</div>
         <div class="flex justify-between mt-3 text-xs font-medium">
           <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-800">重要度: {{ hoveredTask.importance }}</span>
@@ -481,6 +489,40 @@
             ></div>
           </div>
           <span class="ml-2">{{ hoveredTask.priority.toFixed(1) }}</span>
+        </div>
+      </div>
+      
+      <!-- 多任务列表提示框 -->
+      <div 
+        v-if="hoveredTaskGroup" 
+        class="absolute z-30 bg-white rounded-md shadow-lg p-4 w-72 text-sm animate-fade-in border-l-4 border-blue-500"
+        :style="{
+          left: hoveredTaskGroup.x,
+          top: hoveredTaskGroup.y,
+          transform: 'translate(20px, -50%)'
+        }"
+      >
+        <div class="font-medium text-gray-900 text-base mb-3">
+          此位置共有 {{ hoveredTaskGroup.tasks.length }} 个任务
+        </div>
+        <div class="max-h-48 overflow-y-auto space-y-2">
+          <div 
+            v-for="task in hoveredTaskGroup.tasks" 
+            :key="task.id"
+            class="p-2 bg-gray-50 rounded border-l-2 hover:bg-gray-100 cursor-pointer transition-colors"
+            :class="getTaskBorderColor(task)"
+            @click="editTask(task)"
+          >
+            <div class="font-medium text-gray-800 flex items-center">
+              <span class="mr-2">{{ moodEmojis[task.mood] || moodEmojis.smile }}</span>
+              {{ task.title }}
+            </div>
+            <div class="text-xs text-gray-600 mt-1 flex justify-between">
+              <span>重要度: {{ task.importance }}</span>
+              <span>紧急度: {{ task.urgency }}</span>
+              <span>优先级: {{ task.priority.toFixed(1) }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -540,8 +582,42 @@ const props = defineProps({
 
 const emit = defineEmits(['edit-task', 'add-task']);
 const hoveredTask = ref(null);
+const hoveredTaskGroup = ref(null);
 const activeQuadrant = ref(0); // 0表示无活动象限，1-4表示四个象限
 const hoverZoomEnabled = ref(false); // 控制鼠标悬停放大象限事件的开关
+
+// 心情表情映射
+const moodEmojis = {
+  smile: '😊',
+  sad: '😢', 
+  struggle: '💪',
+  shy: '😳',
+  think: '🤔'
+};
+
+// 计算重叠任务组
+const taskGroups = computed(() => {
+  const groups = new Map();
+  const currentTasks = activeQuadrant.value === 0 ? props.tasks : tasksInActiveQuadrant.value;
+  
+  currentTasks.forEach(task => {
+    const x = getTaskPositionX(task);
+    const y = getTaskPositionY(task);
+    const key = `${x}-${y}`;
+    
+    if (!groups.has(key)) {
+      groups.set(key, {
+        x,
+        y,
+        tasks: [],
+        position: { x, y }
+      });
+    }
+    groups.get(key).tasks.push(task);
+  });
+  
+  return Array.from(groups.values());
+});
 
 // 设置活动象限
 function setActiveQuadrant(quadrant) {
@@ -748,6 +824,32 @@ function getQuadrantName(quadrant) {
     case 3: return '不重要但紧急';
     case 4: return '不重要不紧急';
     default: return '';
+  }
+}
+
+// 处理任务组鼠标进入事件
+function handleGroupMouseEnter(group) {
+  if (group.tasks.length === 1) {
+    hoveredTask.value = group.tasks[0];
+    hoveredTaskGroup.value = null;
+  } else {
+    hoveredTask.value = null;
+    hoveredTaskGroup.value = group;
+  }
+}
+
+// 处理任务组鼠标离开事件
+function handleGroupMouseLeave() {
+  hoveredTask.value = null;
+  hoveredTaskGroup.value = null;
+}
+
+// 显示任务列表（多任务点击时）
+function showTaskList(group) {
+  if (!props.editMode) return;
+  // 可以显示一个任务选择对话框，这里暂时选择第一个任务
+  if (group.tasks.length > 0) {
+    emit('edit-task', group.tasks[0]);
   }
 }
 

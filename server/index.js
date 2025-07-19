@@ -62,6 +62,11 @@ const Task = sequelize.define('Task', {
   dueDate: {
     type: DataTypes.DATE,
     allowNull: true
+  },
+  mood: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'smile'
   }
 });
 
