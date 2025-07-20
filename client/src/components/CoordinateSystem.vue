@@ -1,5 +1,5 @@
 <template>
-  <div class="relative w-full h-full bg-white rounded-lg shadow-md overflow-hidden">
+  <div class="relative w-full h-full bg-gradient-to-br from-pink-50 via-white to-purple-50 rounded-3xl shadow-2xl overflow-hidden border-4 border-pink-200" style="background-image: radial-gradient(circle at 20% 80%, rgba(255, 182, 193, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(221, 160, 221, 0.1) 0%, transparent 50%);">
     <!-- 坐标系 -->
     <div class="absolute inset-0 p-8" @mouseleave="activeQuadrant.value !== 0 && resetActiveQuadrant()">
       <!-- Y轴标签 (重要度) - 默认状态 -->
@@ -441,6 +441,10 @@
         <span v-else class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-xs font-bold text-white">
           {{ group.tasks.length }}
         </span>
+        <!-- 任务标题 -->
+        <div v-if="group.tasks.length === 1" class="absolute -bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap bg-white/80 px-2 py-0.5 rounded-full text-2xs shadow-sm max-w-[100px] overflow-hidden text-ellipsis text-center">
+          {{ group.tasks[0].title }}
+        </div>
         <!-- 优先级指示器 -->
         <div 
           class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 h-1 rounded-full transition-all duration-700"
@@ -469,6 +473,8 @@
           left: getTooltipPositionX(hoveredTask),
           top: getTooltipPositionY(hoveredTask)
         }"
+        @mouseenter="keepTooltipVisible = true"
+        @mouseleave="keepTooltipVisible = false"
       >
         <div class="font-medium text-gray-900 text-base flex items-center">
           <span class="mr-2">{{ moodEmojis[hoveredTask.mood] || moodEmojis.smile }}</span>
@@ -489,6 +495,20 @@
             ></div>
           </div>
           <span class="ml-2">{{ hoveredTask.priority.toFixed(1) }}</span>
+        </div>
+        <div class="mt-3 flex justify-between">
+          <button 
+            @click="editTask(hoveredTask)"
+            class="bg-gradient-to-r from-blue-400 to-indigo-400 text-white px-3 py-1 rounded-full hover:shadow-lg transition-all duration-300 hover:scale-105 text-xs font-bold"
+          >
+            ✏️ 编辑
+          </button>
+          <button 
+            @click="completeTask(hoveredTask.id)"
+            class="bg-gradient-to-r from-green-400 to-emerald-400 text-white px-3 py-1 rounded-full hover:shadow-lg transition-all duration-300 hover:scale-105 text-xs font-bold"
+          >
+            ✅ 完成
+          </button>
         </div>
       </div>
       
@@ -527,40 +547,27 @@
       </div>
     </div>
     
-    <!-- 添加按钮 -->
-    <button 
-      v-if="editMode"
-      @click="$emit('add-task')"
-      class="absolute bottom-4 right-4 bg-primary text-white rounded-full p-3 shadow-lg hover:bg-blue-600 transition-all duration-300 hover:scale-110 z-30 animate-bounce-slow"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-      </svg>
-    </button>
+
     
-    <!-- 缩放控制按钮 -->
-    <div class="absolute top-4 right-4 flex space-x-2 z-30">
-      <button 
-        @click="resetActiveQuadrant"
-        class="bg-white text-gray-700 rounded-full p-2 shadow-md hover:bg-gray-100 transition-all duration-300 hover:scale-110"
-        :class="{'bg-primary text-white': activeQuadrant === 0}"
-        title="重置视图"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-        </svg>
-      </button>
-      
+    <!-- 可爱的控制按钮 -->
+    <div class="absolute top-4 right-4 flex space-x-3 z-30">
       <!-- 鼠标悬停放大开关 -->
       <button 
-        @click="hoverZoomEnabled = !hoverZoomEnabled"
-        class="bg-white text-gray-700 rounded-full p-2 shadow-md hover:bg-gray-100 transition-all duration-300 hover:scale-110"
-        :class="{'bg-primary text-white': hoverZoomEnabled}"
-        title="鼠标悬停放大开关"
+        @click="toggleHoverZoom"
+        class="bg-gradient-to-r from-yellow-300 to-orange-300 text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border-2 border-white"
+        :class="{'from-green-400 to-blue-400': hoverZoomEnabled, 'from-gray-300 to-gray-400': !hoverZoomEnabled}"
+        title="🔍 切换鼠标悬停放大"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-        </svg>
+        <span class="text-lg">🔍</span>
+      </button>
+      
+      <!-- 添加任务按钮 -->
+      <button 
+        @click="$emit('add-task')"
+        class="bg-gradient-to-r from-pink-400 to-purple-400 text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border-2 border-white"
+        title="✨ 添加新任务"
+      >
+        <span class="text-lg">➕</span>
       </button>
     </div>
   </div>
@@ -568,21 +575,21 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import { useTaskStore } from '../store/taskStore';
 
 const props = defineProps({
   tasks: {
     type: Array,
     default: () => []
-  },
-  editMode: {
-    type: Boolean,
-    default: false
   }
 });
 
 const emit = defineEmits(['edit-task', 'add-task']);
+
+const taskStore = useTaskStore();
 const hoveredTask = ref(null);
 const hoveredTaskGroup = ref(null);
+const keepTooltipVisible = ref(false);
 const activeQuadrant = ref(0); // 0表示无活动象限，1-4表示四个象限
 const hoverZoomEnabled = ref(false); // 控制鼠标悬停放大象限事件的开关
 
@@ -630,6 +637,15 @@ function setActiveQuadrant(quadrant) {
 // 重置活动象限
 function resetActiveQuadrant() {
   activeQuadrant.value = 0;
+}
+
+// 切换鼠标悬停放大功能
+function toggleHoverZoom() {
+  hoverZoomEnabled.value = !hoverZoomEnabled.value;
+  // 如果关闭悬停放大功能，同时重置活动象限
+  if (!hoverZoomEnabled.value) {
+    resetActiveQuadrant();
+  }
 }
 
 // 判断任务是否在活动象限中
@@ -850,8 +866,11 @@ function handleGroupMouseEnter(group) {
 
 // 处理任务组鼠标离开事件
 function handleGroupMouseLeave() {
-  hoveredTask.value = null;
-  hoveredTaskGroup.value = null;
+  // 如果鼠标在详情框内，则不隐藏详情框
+  if (!keepTooltipVisible.value) {
+    hoveredTask.value = null;
+    hoveredTaskGroup.value = null;
+  }
 }
 
 // 显示任务列表（多任务点击时）
@@ -868,6 +887,11 @@ function editTask(task) {
   if (!props.editMode) return;
   emit('edit-task', task);
 }
+
+// 完成任务
+function completeTask(taskId) {
+  taskStore.completeTask(taskId);
+}
 </script>
 
 <style>
@@ -881,6 +905,12 @@ function editTask(task) {
   0% { transform: scale(0) translate(-50%, -50%); }
   70% { transform: scale(1.2) translate(-50%, -50%); }
   100% { transform: scale(1) translate(-50%, -50%); }
+}
+
+/* 超小号文本 */
+.text-2xs {
+  font-size: 0.65rem;
+  line-height: 0.9rem;
 }
 
 @keyframes drawX {

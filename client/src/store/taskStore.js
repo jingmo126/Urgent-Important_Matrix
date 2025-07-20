@@ -4,6 +4,7 @@ import axios from 'axios'
 export const useTaskStore = defineStore('task', {
   state: () => ({
     tasks: [],
+    completedTasks: [],
     loading: false,
     error: null,
     editMode: false // 控制是否处于编辑模式
@@ -114,6 +115,82 @@ export const useTaskStore = defineStore('task', {
       } catch (error) {
         this.error = error.message || '删除任务失败'
         console.error('删除任务失败:', error)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // 完成任务
+    async completeTask(taskId) {
+      this.loading = true
+      this.error = null
+      
+      try {
+        const task = this.tasks.find(t => t.id === taskId)
+        if (task) {
+          // 添加完成时间
+          const completedTask = {
+            ...task,
+            completedAt: new Date().toISOString(),
+            completed: true
+          }
+          
+          // 发送到服务器（如果需要）
+          await axios.patch(`/api/tasks/${taskId}`, { completed: true, completedAt: completedTask.completedAt })
+          
+          // 从活动任务中移除，添加到已完成任务
+          this.tasks = this.tasks.filter(t => t.id !== taskId)
+          this.completedTasks.push(completedTask)
+        }
+      } catch (error) {
+        this.error = error.message || '完成任务失败'
+        console.error('完成任务失败:', error)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // 恢复任务
+    async restoreTask(taskId) {
+      this.loading = true
+      this.error = null
+      
+      try {
+        const task = this.completedTasks.find(t => t.id === taskId)
+        if (task) {
+          // 移除完成标记
+          const restoredTask = {
+            ...task,
+            completed: false,
+            completedAt: null
+          }
+          
+          // 发送到服务器（如果需要）
+          await axios.patch(`/api/tasks/${taskId}`, { completed: false, completedAt: null })
+          
+          // 从已完成任务中移除，添加到活动任务
+          this.completedTasks = this.completedTasks.filter(t => t.id !== taskId)
+          this.tasks.push(restoredTask)
+        }
+      } catch (error) {
+        this.error = error.message || '恢复任务失败'
+        console.error('恢复任务失败:', error)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // 永久删除任务
+    async permanentlyDeleteTask(taskId) {
+      this.loading = true
+      this.error = null
+      
+      try {
+        await axios.delete(`/api/tasks/${taskId}`)
+        this.completedTasks = this.completedTasks.filter(t => t.id !== taskId)
+      } catch (error) {
+        this.error = error.message || '永久删除任务失败'
+        console.error('永久删除任务失败:', error)
       } finally {
         this.loading = false
       }

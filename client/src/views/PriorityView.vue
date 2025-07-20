@@ -1,9 +1,12 @@
 <template>
   <div>
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold">任务优先级列表</h1>
-      <button @click="openAddTaskModal" class="btn btn-primary">
-        添加任务
+    <div class="text-center mb-8">
+      <div class="text-4xl mb-3">📝</div>
+      <h1 class="text-3xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent mb-2">任务优先级列表</h1>
+      <p class="text-lg text-purple-600 font-medium">优先级管理，井井有条📋</p>
+      <div class="w-24 h-1 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full mx-auto mt-3"></div>
+      <button @click="openAddTaskModal" class="mt-4 bg-gradient-to-r from-pink-400 to-purple-400 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-medium">
+        ✨ 添加任务
       </button>
     </div>
 
@@ -20,78 +23,92 @@
     </div>
 
     <div v-else class="space-y-4">
-      <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+      <div class="bg-gradient-to-br from-white to-pink-50 shadow-2xl overflow-hidden rounded-3xl border-4 border-pink-200">
+        <table class="min-w-full divide-y divide-pink-200">
+          <thead class="bg-gradient-to-r from-pink-100 to-purple-100">
             <tr>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                任务名称
+              <th class="px-6 py-4 text-left text-sm font-bold text-purple-700 tracking-wider">
+                📋 任务
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                优先级
+              <th class="px-6 py-4 text-left text-sm font-bold text-purple-700 tracking-wider">
+                ⭐ 重要度
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                重要度
+              <th class="px-6 py-4 text-left text-sm font-bold text-purple-700 tracking-wider">
+                🔥 紧急度
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                紧急度
+              <th class="px-6 py-4 text-left text-sm font-bold text-purple-700 tracking-wider">
+                📅 截止日期
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                截止日期
+              <th class="px-6 py-4 text-left text-sm font-bold text-purple-700 tracking-wider">
+                🎯 优先级
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                操作
+              <th class="px-6 py-4 text-left text-sm font-bold text-purple-700 tracking-wider">
+                ⚙️ 操作
               </th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="task in taskStore.tasksByPriority" :key="task.id">
+          <tbody class="bg-gradient-to-br from-white to-pink-25 divide-y divide-pink-100">
+            <tr v-for="task in taskStore.tasksByPriority" :key="task.id" class="hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 transition-all duration-300">
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
-                  <div>
-                    <div class="text-sm font-medium text-gray-900">
+                  <div class="flex-shrink-0 h-12 w-12">
+                    <div class="h-12 w-12 rounded-full flex items-center justify-center text-xl shadow-lg border-2 border-white bg-gradient-to-br from-pink-200 to-purple-200">
+                      📝
+                    </div>
+                  </div>
+                  <div class="ml-4">
+                    <div class="text-sm font-bold text-purple-800">
                       {{ task.title }}
                     </div>
-                    <div v-if="task.description" class="text-sm text-gray-500 truncate max-w-xs">
+                    <div v-if="task.description" class="text-sm text-purple-600 truncate max-w-xs">
                       {{ task.description }}
                     </div>
                   </div>
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900 font-medium">
+                <div class="bg-gradient-to-r from-green-200 to-emerald-200 text-green-800 px-3 py-1 rounded-full text-sm font-bold shadow-md inline-block">
                   {{ task.priority.toFixed(1) }}
                 </div>
                 <PriorityBadge :value="task.priority" />
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">
-                  {{ task.importance }}/10
+                <div class="flex items-center">
+                  <div class="bg-gradient-to-r from-yellow-200 to-orange-200 text-orange-800 px-3 py-1 rounded-full text-sm font-bold shadow-md">
+                    {{ task.importance }}/10
+                  </div>
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">
-                  {{ task.urgency }}/10
+                <div class="flex items-center">
+                  <div class="bg-gradient-to-r from-red-200 to-pink-200 text-red-800 px-3 py-1 rounded-full text-sm font-bold shadow-md">
+                    {{ task.urgency }}/10
+                  </div>
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <div v-if="task.dueDate" class="text-sm text-gray-900">
-                  {{ formatDate(task.dueDate) }}
+                <div v-if="task.dueDate" class="text-sm">
+                  <div class="bg-gradient-to-r from-blue-200 to-indigo-200 text-blue-800 px-3 py-1 rounded-full font-bold shadow-md inline-block">
+                    {{ formatDate(task.dueDate) }}
+                  </div>
                   <span v-if="getDaysRemaining(task.dueDate) <= 3" 
-                    class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" 
-                    :class="getDaysRemaining(task.dueDate) <= 0 ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'"
+                    class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-bold shadow-md" 
+                    :class="getDaysRemaining(task.dueDate) <= 0 ? 'bg-gradient-to-r from-red-300 to-red-400 text-red-900' : 'bg-gradient-to-r from-yellow-300 to-yellow-400 text-yellow-900'"
                   >
-                    {{ getDaysRemaining(task.dueDate) <= 0 ? '已过期' : `剩余${getDaysRemaining(task.dueDate)}天` }}
+                    {{ getDaysRemaining(task.dueDate) <= 0 ? '⚠️ 已过期' : `⏰ 剩余${getDaysRemaining(task.dueDate)}天` }}
                   </span>
                 </div>
-                <div v-else class="text-sm text-gray-500">无截止日期</div>
+                <div v-else class="text-sm text-purple-500 font-medium">📅 无截止日期</div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <button @click="openEditTaskModal(task)" class="text-primary hover:text-blue-700 mr-3">
-                  编辑
+                <button @click="completeTask(task.id)" class="bg-gradient-to-r from-green-400 to-emerald-400 text-white px-3 py-1 rounded-full hover:shadow-lg transition-all duration-300 hover:scale-105 mr-2 text-xs font-bold">
+                  ✅ 完成
                 </button>
-                <button @click="confirmDelete(task.id)" class="text-danger hover:text-red-700">
-                  删除
+                <button @click="openEditTaskModal(task)" class="bg-gradient-to-r from-blue-400 to-indigo-400 text-white px-3 py-1 rounded-full hover:shadow-lg transition-all duration-300 hover:scale-105 mr-2 text-xs font-bold">
+                  ✏️ 编辑
+                </button>
+                <button @click="confirmDelete(task.id)" class="bg-gradient-to-r from-red-400 to-pink-400 text-white px-3 py-1 rounded-full hover:shadow-lg transition-all duration-300 hover:scale-105 text-xs font-bold">
+                  🗑️ 删除
                 </button>
               </td>
             </tr>
@@ -184,6 +201,11 @@ function updateTask(task) {
 function deleteTask(taskId) {
   taskStore.deleteTask(taskId);
   showDeleteConfirm.value = false;
+}
+
+// 完成任务
+function completeTask(taskId) {
+  taskStore.completeTask(taskId);
 }
 
 // 格式化日期
