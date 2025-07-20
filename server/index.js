@@ -67,6 +67,15 @@ const Task = sequelize.define('Task', {
     type: DataTypes.STRING,
     allowNull: true,
     defaultValue: 'smile'
+  },
+  completed: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  completedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
   }
 });
 
@@ -75,11 +84,31 @@ const Task = sequelize.define('Task', {
 // 获取所有任务
 app.get('/api/tasks', async (req, res) => {
   try {
-    const tasks = await Task.findAll();
+    // 默认获取未完成的任务
+    const tasks = await Task.findAll({
+      where: {
+        completed: false
+      }
+    });
     res.json(tasks);
   } catch (error) {
     console.error('获取任务失败:', error);
     res.status(500).json({ message: '获取任务失败', error: error.message });
+  }
+});
+
+// 获取已完成任务
+app.get('/api/tasks/completed', async (req, res) => {
+  try {
+    const completedTasks = await Task.findAll({
+      where: {
+        completed: true
+      }
+    });
+    res.json(completedTasks);
+  } catch (error) {
+    console.error('获取已完成任务失败:', error);
+    res.status(500).json({ message: '获取已完成任务失败', error: error.message });
   }
 });
 
@@ -123,6 +152,21 @@ app.put('/api/tasks/:id', async (req, res) => {
   }
 });
 
+// 部分更新任务（支持PATCH请求）
+app.patch('/api/tasks/:id', async (req, res) => {
+  try {
+    const task = await Task.findByPk(req.params.id);
+    if (!task) {
+      return res.status(404).json({ message: '任务不存在' });
+    }
+    await task.update(req.body);
+    res.json(task);
+  } catch (error) {
+    console.error('更新任务失败:', error);
+    res.status(400).json({ message: '更新任务失败', error: error.message });
+  }
+});
+
 // 删除任务
 app.delete('/api/tasks/:id', async (req, res) => {
   try {
@@ -153,9 +197,9 @@ const PORT = process.env.PORT || 5000;
 
 async function startServer() {
   try {
-    // 同步数据库模型
-    await sequelize.sync();
-    console.log('数据库已同步');
+    // 同步数据库模型（强制重建表以应用新的字段）
+    await sequelize.sync({ alter: true });
+    console.log('数据库已同步（已应用模型更改）');
     
     // 启动服务器
     app.listen(PORT, () => {

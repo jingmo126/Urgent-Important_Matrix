@@ -55,11 +55,24 @@ export const useTaskStore = defineStore('task', {
       try {
         const response = await axios.get('/api/tasks')
         this.tasks = response.data
+        
+        // 同时获取已完成任务
+        await this.fetchCompletedTasks()
       } catch (error) {
         this.error = error.message || '获取任务失败'
         console.error('获取任务失败:', error)
       } finally {
         this.loading = false
+      }
+    },
+    
+    // 获取已完成任务
+    async fetchCompletedTasks() {
+      try {
+        const response = await axios.get('/api/tasks/completed')
+        this.completedTasks = response.data
+      } catch (error) {
+        console.error('获取已完成任务失败:', error)
       }
     },
     
@@ -149,7 +162,7 @@ export const useTaskStore = defineStore('task', {
         this.loading = false
       }
     },
-
+    
     // 恢复任务
     async restoreTask(taskId) {
       this.loading = true
