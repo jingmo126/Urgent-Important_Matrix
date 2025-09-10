@@ -19,18 +19,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 数据库连接
-const sequelize = new Sequelize({
-  dialect: 'mysql',
-  host: process.env.DB_HOST || 'localhost',
-  username: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'quadrant_tasks',
-  logging: false
-});
+// 数据库连接 - 使用MySQL服务器
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    dialect: 'mysql',
+    logging: false
+  }
+);
 
-// 定义任务模型
-const Task = sequelize.define('Task', {
+// 定义目标模型
+const Goal = sequelize.define('Goal', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -63,10 +65,36 @@ const Task = sequelize.define('Task', {
     type: DataTypes.DATE,
     allowNull: true
   },
-  mood: {
+  completed: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  completedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  marked: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  }
+});
+
+// 定义行动模型
+const Action = sequelize.define('Action', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  title: {
     type: DataTypes.STRING,
-    allowNull: true,
-    defaultValue: 'smile'
+    allowNull: false
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true
   },
   completed: {
     type: DataTypes.BOOLEAN,
@@ -76,11 +104,167 @@ const Task = sequelize.define('Task', {
   completedAt: {
     type: DataTypes.DATE,
     allowNull: true
+  },
+  marked: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
   }
 });
 
+// 设置目标和行动的关联关系
+Goal.hasMany(Action, {
+  foreignKey: 'goalId',
+  as: 'actions'
+});
+
+Action.belongsTo(Goal, {
+  foreignKey: 'goalId',
+  as: 'goal'
+});
+
+// 为了保持向后兼容，保留Task模型的引用
+const Task = Goal;
+
 // 路由
 
+// 获取所有目标
+app.get('/api/goals', async (req, res) => {
+  try {
+    // 默认获取未完成的目标
+    const goals = await Goal.findAll({
+      where: {
+        completed: false
+      },
+      include: [{ model: Action, as: 'actions', where: { completed: false }, required: false }]
+    });
+    res.json(goals);
+  } catch (error) {
+    console.error('获取目标失败:', error);
+    res.status(500).json({ message: '获取目标失败', error: error.message });
+  }
+});
+
+// 获取所有行动
+app.get('/api/actions', async (req, res) => {
+  try {
+    // 默认获取未完成的行动
+    const actions = await Action.findAll({
+      where: {
+        completed: false
+      },
+      include: [{ model: Goal, as: 'goal' }]
+    });
+    res.json(actions);
+  } catch (error) {
+    console.error('获取行动失败:', error);
+    res.status(500).json({ message: '获取行动失败', error: error.message });
+  }
+});
+
+// 获取目标的所有行动
+app.get('/api/goals/:goalId/actions', async (req, res) => {
+  try {
+    const actions = await Action.findAll({
+      where: {
+        goalId: req.params.goalId,
+        completed: false
+      }
+    });
+    res.json(actions);
+  } catch (error) {
+    console.error('获取行动失败:', error);
+    res.status(500).json({ message: '获取行动失败', error: error.message });
+  }
+});
+
+// 创建行动
+app.post('/api/actions', async (req, res) => {
+  try {
+    const action = await Action.create(req.body);
+    res.status(201).json(action);
+  } catch (error) {
+    console.error('创建行动失败:', error);
+    res.status(400).json({ message: '创建行动失败', error: error.message });
+  }
+});
+
+// 更新行动
+app.put('/api/actions/:id', async (req, res) => {
+  try {
+    const action = await Action.findByPk(req.params.id);
+    if (!action) {
+      return res.status(404).json({ message: '行动不存在' });
+    }
+    await action.update(req.body);
+    res.json(action);
+  } catch (error) {
+    console.error('更新行动失败:', error);
+    res.status(400).json({ message: '更新行动失败', error: error.message });
+  }
+});
+
+// 部分更新行动
+app.patch('/api/actions/:id', async (req, res) => {
+  try {
+    const action = await Action.findByPk(req.params.id);
+    if (!action) {
+      return res.status(404).json({ message: '行动不存在' });
+    }
+    await action.update(req.body);
+    res.json(action);
+  } catch (error) {
+    console.error('更新行动失败:', error);
+    res.status(400).json({ message: '更新行动失败', error: error.message });
+  }
+});
+
+// 删除行动
+app.delete('/api/actions/:id', async (req, res) => {
+  try {
+    const action = await Action.findByPk(req.params.id);
+    if (!action) {
+      return res.status(404).json({ message: '行动不存在' });
+    }
+    await action.destroy();
+    res.status(204).end();
+  } catch (error) {
+    console.error('删除行动失败:', error);
+    res.status(500).json({ message: '删除行动失败', error: error.message });
+  }
+});
+
+// 标记/取消标记目标
+app.patch('/api/goals/:id/mark', async (req, res) => {
+  try {
+    const goal = await Goal.findByPk(req.params.id);
+    if (!goal) {
+      return res.status(404).json({ message: '目标不存在' });
+    }
+    await goal.update({ marked: !goal.marked });
+    res.json(goal);
+  } catch (error) {
+    console.error('标记目标失败:', error);
+    res.status(400).json({ message: '标记目标失败', error: error.message });
+  }
+});
+
+// 标记/取消标记行动
+app.patch('/api/actions/:id/mark', async (req, res) => {
+  try {
+    const action = await Action.findByPk(req.params.id);
+    if (!action) {
+      return res.status(404).json({ message: '行动不存在' });
+    }
+    await action.update({ marked: !action.marked });
+    res.json(action);
+  } catch (error) {
+    console.error('标记行动失败:', error);
+    res.status(400).json({ message: '标记行动失败', error: error.message });
+  }
+});
+
+// 为了保持向后兼容，保留原有的任务API
 // 获取所有任务
 app.get('/api/tasks', async (req, res) => {
   try {

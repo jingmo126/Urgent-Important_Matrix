@@ -50,18 +50,77 @@ npm run install:all
 
 3. 配置数据库
 
-- 创建MySQL数据库 `quadrant_tasks`
-- 根据需要修改 `server/.env` 文件中的数据库配置
+- 创建MySQL数据库
+  ```bash
+  mysql -u root -p
+  CREATE DATABASE quadrant_tasks;
+  ```
 
-4. 启动开发服务器
+- 配置环境变量
+  - 复制 `server/.env.example` 文件并重命名为 `server/.env`
+  - 修改 `.env` 文件中的数据库配置参数：
+    ```
+    # 数据库配置
+    DB_HOST=localhost          # MySQL服务器地址
+    DB_USER=root               # MySQL用户名
+    DB_PASSWORD=password       # MySQL密码
+    DB_NAME=quadrant_tasks     # 数据库名称
+    
+    # 服务器配置
+    PORT=5000
+    NODE_ENV=development
+    ```
+  - 确保您的MySQL服务器允许远程连接（如果需要）
+  - 确保指定的用户有足够的权限访问quadrant_tasks数据库
+
+### 启动指南
+
+您可以选择以下两种方式之一启动应用：
+
+#### 方式 1: 同时启动前后端服务器
 
 ```bash
 npm run dev
 ```
 
-这将同时启动前端和后端服务器：
-- 前端: http://localhost:3000
-- 后端: http://localhost:5000
+这将同时启动：
+- 前端服务器: http://localhost:3000
+- 后端服务器: http://localhost:5000
+
+#### 方式 2: 分别启动前后端服务器
+
+1. **确保MySQL服务器正在运行**
+
+2. **启动后端服务器** (在一个终端)
+
+```bash
+npm run dev:server
+```
+
+3. **启动前端服务器** (在另一个终端)
+
+```bash
+npm run dev:client
+```
+
+### 故障排除
+
+如果遇到 `ECONNREFUSED` 错误或其他连接问题，请使用以下工具进行诊断：
+
+1. **检查服务器状态**
+
+```bash
+node check-server-status.js
+```
+
+2. **测试数据库连接**
+
+```bash
+cd server
+node test-mysql-connection.js
+```
+
+这些脚本会提供详细的诊断信息和解决方案建议。
 
 ## 使用说明
 

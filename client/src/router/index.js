@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import QuadrantView from '../views/QuadrantView.vue'
-import PriorityView from '../views/PriorityView.vue'
+import ToDoList from '../views/ToDoList.vue'
 import CompletedView from '../views/CompletedView.vue'
 
 const router = createRouter({
@@ -14,7 +14,12 @@ const router = createRouter({
     {
       path: '/priority',
       name: 'priority',
-      component: PriorityView
+      component: ToDoList
+    },
+    {
+      path: '/actions',
+      name: 'actions',
+      component: ToDoList
     },
     {
       path: '/completed',

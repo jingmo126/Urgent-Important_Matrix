@@ -13,8 +13,8 @@
     >
       <!-- 可爱的标题区域 -->
       <div class="text-center mb-6">
-        <div class="text-2xl mb-2">🌸</div>
-        <h1 class="text-xl font-bold text-purple-700 leading-tight">任务坐标系</h1>
+        <div class="text-2xl mb-2">🎯</div>
+        <h1 class="text-xl font-bold text-purple-700 leading-tight">目标坐标系</h1>
         <h2 class="text-lg font-medium text-pink-600">管理中心</h2>
         <div class="w-16 h-1 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full mx-auto mt-2"></div>
       </div>
@@ -69,7 +69,7 @@ const menuItems = [
     emoji: '📊',
   },
   {
-    name: '优先级列表',
+    name: '行动列表',
     path: '/priority',
     emoji: '📝',
   },

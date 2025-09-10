@@ -1,7 +1,7 @@
 <template>
   <div class="relative w-full h-full bg-gradient-to-br from-pink-50 via-white to-purple-50 rounded-3xl shadow-2xl overflow-hidden border-4 border-pink-200" style="background-image: radial-gradient(circle at 20% 80%, rgba(255, 182, 193, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(221, 160, 221, 0.1) 0%, transparent 50%);">
     <!-- 坐标系 -->
-    <div class="absolute inset-0 p-8" @mouseleave="activeQuadrant.value !== 0 && resetActiveQuadrant()">
+    <div class="absolute inset-0 p-8" @click="handleCoordinateClick($event)">
       <!-- Y轴标签 (重要度) - 默认状态 -->
       <div v-if="activeQuadrant === 0" class="absolute top-0 left-0 h-full flex items-center">
         <div class="transform -rotate-90 origin-center whitespace-nowrap text-sm font-medium text-blue-500 animate-fadeIn">
@@ -413,44 +413,40 @@
         >不重要但紧急</text>
       </svg>
       
-      <!-- 任务点组 -->
+      <!-- 目标点组 -->
       <div 
-        v-for="group in taskGroups" 
+        v-for="group in goalGroups" 
         :key="`group-${group.x}-${group.y}`"
         class="absolute rounded-full shadow-md transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-700 hover:scale-125 z-10 animate-pop-in"
         :class="[
-          group.tasks.length === 1 ? getTaskColor(group.tasks[0]) : 'bg-blue-500',
-          activeQuadrant !== 0 ? 'scale-150 z-20 ring-2 ring-white' : 'scale-100',
-          group.tasks.length === 1 ? 'task-draggable' : ''
+          group.goals.length === 1 ? getGoalColor(group.goals[0]) : 'bg-blue-500'
         ]"
         :style="{
             left: group.x,
             top: group.y,
-            width: activeQuadrant !== 0 ? '36px' : '24px',
-            height: activeQuadrant !== 0 ? '36px' : '24px',
-            'animation-delay': group.tasks[0].id * 100 + 'ms'
+            width: '24px',
+            height: '24px',
+            'animation-delay': group.goals[0].id * 100 + 'ms'
           }"
-        @click="group.tasks.length === 1 ? editTask(group.tasks[0]) : showTaskList(group)"
-        @mouseenter="handleGroupMouseEnter(group)"
-        @mouseleave="handleGroupMouseLeave()"
-        @mousedown="group.tasks.length === 1 ? startDrag($event, group.tasks[0]) : null"
+        @click.stop="group.goals.length === 1 ? enterGoalTodoList(group.goals[0]) : null"
+        @mousedown.stop="group.goals.length === 1 ? startDrag($event, group.goals[0]) : null"
       >
-        <!-- 单个任务显示心情图标 -->
-        <span v-if="group.tasks.length === 1" class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-lg">
-          {{ moodEmojis[group.tasks[0].mood] || moodEmojis.smile }}
+        <!-- 单个目标显示图标 -->
+        <span v-if="group.goals.length === 1" class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-lg">
+          {{ group.goals[0].marked ? '⭐' : '📌' }}
         </span>
-        <!-- 多个任务显示数量 -->
+        <!-- 多个目标显示数量 -->
         <span v-else class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-xs font-bold text-white">
-          {{ group.tasks.length }}
+          {{ group.goals.length }}
         </span>
-        <!-- 任务标题 -->
-        <div v-if="group.tasks.length === 1" 
+        <!-- 目标标题 -->
+        <div v-if="group.goals.length === 1" 
           class="absolute -bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap bg-white/80 px-2 py-0.5 rounded-full text-2xs shadow-sm max-w-[100px] overflow-hidden text-center cursor-pointer hover:bg-white hover:shadow-md transition-all duration-300"
-          @click.stop.prevent="editTaskTitle(group.tasks[0], $event)"
+          @click.stop.prevent="editGoalTitle(group.goals[0], $event)"
           @mousedown.stop.prevent
-          :title="'点击编辑任务名称'"
+          :title="'点击编辑目标名称'"
         >
-          {{ group.tasks[0].title }}
+          {{ group.goals[0].title }}
         </div>
         <!-- 优先级指示器 -->
         <div 
@@ -462,135 +458,27 @@
       
       <!-- 底部提示信息 -->
       <div 
-        v-if="activeQuadrant !== 0" 
         class="absolute bottom-4 left-0 right-0 text-center text-sm text-blue-600 font-medium bg-blue-50 py-2 px-4 rounded-md mx-auto w-auto max-w-xs animate-fade-in shadow-md flex items-center justify-center space-x-2"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 animate-pulse-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span>当前正在查看<span class="font-bold">{{ getQuadrantName(activeQuadrant) }}</span>象限，<span class="font-bold">将鼠标移出整个坐标系</span>可返回全局视图</span>
-      </div>
-      
-      <!-- 单任务信息提示框 -->
-      <div 
-        v-if="hoveredTask && (activeQuadrant === 0 || getTaskQuadrant(hoveredTask) === activeQuadrant)" 
-        class="absolute z-30 bg-white rounded-md shadow-lg p-4 w-64 text-sm animate-fade-in border-l-4 transition-all duration-700"
-        :class="getTaskBorderColor(hoveredTask)"
-        :style="{
-          left: getTooltipPositionX(hoveredTask),
-          top: getTooltipPositionY(hoveredTask),
-          transform: 'translate(0, -50%)', // 垂直居中并向右偏移，避免遮挡任务点
-          maxWidth: 'calc(100% - 80px)' // 确保不会超出容器边界
-        }"
-        @mouseenter="() => { keepTooltipVisible = true; if(tooltipHideTimeout.value) { clearTimeout(tooltipHideTimeout.value); tooltipHideTimeout.value = null; } }"
-        @mouseleave="() => { keepTooltipVisible = false; handleGroupMouseLeave(); }"
-      >
-        <div class="font-medium text-gray-900 text-base flex items-center">
-          <span class="mr-2">{{ moodEmojis[hoveredTask.mood] || moodEmojis.smile }}</span>
-          {{ hoveredTask.title }}
-        </div>
-        <div v-if="hoveredTask.description" class="text-gray-600 mt-2 text-xs">{{ hoveredTask.description }}</div>
-        <div class="flex justify-between mt-3 text-xs font-medium">
-          <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-800">重要度: {{ hoveredTask.importance }}</span>
-          <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-800">紧急度: {{ hoveredTask.urgency }}</span>
-        </div>
-        <div class="text-xs font-medium mt-2 flex items-center">
-          <span class="mr-2">优先级:</span>
-          <div class="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              class="h-2 rounded-full transition-all duration-500 animate-pulse-slow"
-              :class="getPriorityBarColor(hoveredTask)"
-              :style="{width: `${hoveredTask.priority * 10}%`}"
-            ></div>
-          </div>
-          <span class="ml-2">{{ hoveredTask.priority.toFixed(1) }}</span>
-        </div>
-        <div class="mt-3 flex justify-between">
-          <button 
-            @click="editTask(hoveredTask)"
-            class="bg-gradient-to-r from-blue-400 to-indigo-400 text-white px-3 py-1 rounded-full hover:shadow-lg transition-all duration-300 hover:scale-105 text-xs font-bold"
-          >
-            ✏️ 编辑
-          </button>
-          <button 
-            @click="completeTask(hoveredTask.id)"
-            class="bg-gradient-to-r from-green-400 to-emerald-400 text-white px-3 py-1 rounded-full hover:shadow-lg transition-all duration-300 hover:scale-105 text-xs font-bold"
-          >
-            ✅ 完成
-          </button>
-        </div>
-      </div>
-      
-      <!-- 多任务列表提示框 -->
-      <div 
-        v-if="hoveredTaskGroup" 
-        class="absolute z-30 bg-white rounded-md shadow-lg p-4 w-72 text-sm animate-fade-in border-l-4 border-blue-500"
-        :style="{
-          left: hoveredTaskGroup.x,
-          top: hoveredTaskGroup.y,
-          transform: 'translate(50px, -50%)', // 增加水平偏移，避免遮挡任务点和文本框
-          maxWidth: 'calc(100% - 100px)' // 确保不会超出容器边界
-        }"
-        @mouseenter="() => { keepTooltipVisible = true; if(tooltipHideTimeout.value) { clearTimeout(tooltipHideTimeout.value); tooltipHideTimeout.value = null; } }"
-        @mouseleave="() => { keepTooltipVisible = false; handleGroupMouseLeave(); }"
-      >
-        <div class="font-medium text-gray-900 text-base mb-3">
-          此位置共有 {{ hoveredTaskGroup.tasks.length }} 个任务
-        </div>
-        <div class="max-h-48 overflow-y-auto space-y-2">
-          <div 
-            v-for="task in hoveredTaskGroup.tasks" 
-            :key="task.id"
-            class="p-2 bg-gray-50 rounded border-l-2 hover:bg-gray-100 cursor-pointer transition-colors"
-            :class="getTaskBorderColor(task)"
-            @click="editTask(task)"
-          >
-            <div class="font-medium text-gray-800 flex items-center">
-              <span class="mr-2">{{ moodEmojis[task.mood] || moodEmojis.smile }}</span>
-              {{ task.title }}
-            </div>
-            <div class="text-xs text-gray-600 mt-1 flex justify-between">
-              <span>重要度: {{ task.importance }}</span>
-              <span>紧急度: {{ task.urgency }}</span>
-              <span>优先级: {{ task.priority.toFixed(1) }}</span>
-            </div>
-          </div>
-        </div>
+        <span>点击目标进入ToDoList | 点击空白区域创建目标</span>
       </div>
     </div>
     
 
     
-    <!-- 可爱的控制按钮 -->
-    <div class="absolute top-4 right-4 flex space-x-3 z-30">
-      <!-- 鼠标悬停放大开关 -->
-      <button 
-        @click="toggleHoverZoom"
-        class="bg-gradient-to-r from-yellow-300 to-orange-300 text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border-2 border-white"
-        :class="{'from-green-400 to-blue-400': hoverZoomEnabled, 'from-gray-300 to-gray-400': !hoverZoomEnabled}"
-        title="🔍 切换鼠标悬停放大"
-      >
-        <span class="text-lg">🔍</span>
-      </button>
-      
-      <!-- 添加任务按钮 -->
-      <button 
-        @click="$emit('add-task')"
-        class="bg-gradient-to-r from-pink-400 to-purple-400 text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border-2 border-white"
-        title="✨ 添加新任务"
-      >
-        <span class="text-lg">➕</span>
-      </button>
-    </div>
-    
     <!-- 拖拽提示 -->
     <div class="absolute bottom-4 right-4 bg-white/90 rounded-lg shadow-md px-3 py-2 text-xs text-gray-700 max-w-xs z-30 border-l-4 border-blue-400 animate-fade-in">
       <div class="font-medium mb-1 text-blue-600">💡 小提示</div>
       <ul class="list-disc pl-4 space-y-1">
-        <li>点击任务下方的文本可以直接修改任务名称</li>
-        <li>长按并拖动任务可以修改其重要度和紧急度</li>
+        <li>点击目标下方的文本可以直接修改目标名称</li>
+        <li>长按并拖动目标可以修改其重要度和紧急度</li>
       </ul>
     </div>
+    
+
   </div>
 </template>
 
@@ -599,120 +487,54 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useTaskStore } from '../store/taskStore';
 
 const props = defineProps({
-  tasks: {
+  goals: {
     type: Array,
     default: () => []
   }
 });
 
-const emit = defineEmits(['edit-task', 'add-task']);
+const emit = defineEmits(['enter-todo-list', 'create-goal']);
 
 const taskStore = useTaskStore();
-const hoveredTask = ref(null);
-const hoveredTaskGroup = ref(null);
-const keepTooltipVisible = ref(false);
-const activeQuadrant = ref(0); // 0表示无活动象限，1-4表示四个象限
-const hoverZoomEnabled = ref(false); // 控制鼠标悬停放大象限事件的开关
 
 // 拖拽相关状态
 const isDragging = ref(false);
-const draggedTask = ref(null);
+const draggedGoal = ref(null);
 const dragStartX = ref(0);
 const dragStartY = ref(0);
 const dragStartTime = ref(0); // 记录鼠标按下的时间
 const dragThreshold = 5; // 拖拽阈值（像素）
 const clickThreshold = 300; // 点击阈值（毫秒）
 const dragContainer = ref(null); // 拖拽容器引用
-const dragIconElement = ref(null); // 拖拽时跟随鼠标的心情图标元素
+const dragIconElement = ref(null); // 拖拽时跟随鼠标的图标元素
 const isClick = ref(true); // 标记当前操作是否为点击
 
-// 心情表情映射
-const moodEmojis = {
-  smile: '😊',
-  cry: '😢', 
-  struggle: '💪',
-  shy: '😳',
-  thinking: '🤔'
-};
-
-// 计算重叠任务组
-const taskGroups = computed(() => {
+// 计算重叠目标组
+const goalGroups = computed(() => {
   const groups = new Map();
-  const currentTasks = activeQuadrant.value === 0 ? props.tasks : tasksInActiveQuadrant.value;
   
-  currentTasks.forEach(task => {
-    const x = getTaskPositionX(task);
-    const y = getTaskPositionY(task);
+  props.goals.forEach(goal => {
+    const x = getGoalPositionX(goal);
+    const y = getGoalPositionY(goal);
     const key = `${x}-${y}`;
     
     if (!groups.has(key)) {
       groups.set(key, {
         x,
         y,
-        tasks: [],
+        goals: [],
         position: { x, y }
       });
     }
-    groups.get(key).tasks.push(task);
+    groups.get(key).goals.push(goal);
   });
   
   return Array.from(groups.values());
 });
 
-// 设置活动象限
-function setActiveQuadrant(quadrant) {
-  // 只有当开关启用时，才允许通过鼠标悬停设置活动象限
-  if (hoverZoomEnabled.value || activeQuadrant.value !== 0) {
-    activeQuadrant.value = quadrant;
-  }
-}
-
-// 重置活动象限
-function resetActiveQuadrant() {
-  activeQuadrant.value = 0;
-}
-
-// 切换鼠标悬停放大功能
-function toggleHoverZoom() {
-  hoverZoomEnabled.value = !hoverZoomEnabled.value;
-  // 如果关闭悬停放大功能，同时重置活动象限
-  if (!hoverZoomEnabled.value) {
-    resetActiveQuadrant();
-  }
-}
-
-// 判断任务是否在活动象限中
-function isTaskInActiveQuadrant(task) {
-  if (activeQuadrant.value === 0) return false;
-  
-  const quadrant = getTaskQuadrant(task);
-  return quadrant === activeQuadrant.value;
-}
-
-// 获取当前象限中的任务
-const tasksInActiveQuadrant = computed(() => {
-  if (activeQuadrant.value === 0) return [];
-  return props.tasks.filter(task => getTaskQuadrant(task) === activeQuadrant.value);
-});
-
-// 获取任务所在象限
-function getTaskQuadrant(task) {
-  const importance = task.importance;
-  const urgency = task.urgency;
-  
-  // 特殊处理坐标值为[5,5]的点，放在第三象限
-  if (importance === 5 && urgency === 5) return 3; // [5,5]的点放在第三象限
-  
-  if (importance > 5 && urgency > 5) return 1; // 重要紧急（第一象限，右上角）
-  if (importance > 5 && urgency <= 5) return 2; // 重要不紧急（第二象限，左上角）
-  if (importance <= 5 && urgency <= 5) return 3; // 不重要不紧急（第三象限，左下角）
-  if (importance <= 5 && urgency > 5) return 4; // 不重要但紧急（第四象限，右下角）
-  return 0; // 默认返回全局视图
-}
-
-// 根据任务的优先级获取颜色
-function getTaskColor(task) {
-  const priority = task.priority;
+// 根据目标的优先级获取颜色
+function getGoalColor(goal) {
+  const priority = goal.priority;
   
   if (priority >= 8) return 'bg-danger';
   if (priority >= 6) return 'bg-warning';
@@ -720,227 +542,35 @@ function getTaskColor(task) {
   return 'bg-gray-500';
 }
 
-// 获取任务边框颜色
-function getTaskBorderColor(task) {
-  const priority = task.priority;
-  
-  if (priority >= 8) return 'border-danger';
-  if (priority >= 6) return 'border-warning';
-  if (priority >= 4) return 'border-primary';
-  return 'border-gray-500';
-}
-
-// 获取优先级进度条颜色
-function getPriorityBarColor(task) {
-  const priority = task.priority;
-  
-  if (priority >= 8) return 'bg-danger';
-  if (priority >= 6) return 'bg-warning';
-  if (priority >= 4) return 'bg-primary';
-  return 'bg-gray-500';
-}
-
-// 获取任务X坐标位置
-function getTaskPositionX(task) {
-  // 特殊处理[5,5]坐标点，仅在默认视图下显示在中央虚线交汇处
-  if (task.importance === 5 && task.urgency === 5 && activeQuadrant.value === 0) {
+// 获取目标X坐标位置
+function getGoalPositionX(goal) {
+  // 特殊处理[5,5]坐标点，显示在中央虚线交汇处
+  if (goal.importance === 5 && goal.urgency === 5) {
     return '50%';
   }
   
-  if (activeQuadrant.value === 0) {
-    // 默认视图下的位置
-    return `${10 + (task.urgency - 1) * 8.5}%`;
-  } else {
-    // 放大视图下的位置
-    const quadrant = getTaskQuadrant(task);
-    
-    // 确保只计算当前活动象限的任务位置
-    if (quadrant !== activeQuadrant.value) {
-      return '50%'; // 非当前象限的任务不应显示，但为防止错误，返回中心位置
-    }
-    
-    // 在放大视图中，将任务点映射到更集中的可见区域（25%-75%）
-    // 第一象限：横轴范围5-10
-    // 第二象限：横轴范围0-5
-    // 第三象限：横轴范围0-5
-    // 第四象限：横轴范围5-10
-    if (quadrant === 1) { // 第一象限（右上角）
-      // 将urgency 6-10映射到25%-75%
-      return `${25 + (task.urgency - 6) * (50 / 4)}%`;
-    } else if (quadrant === 2) { // 第二象限（左上角）
-      // 将urgency 1-5映射到25%-75%
-      return `${25 + (task.urgency - 1) * (50 / 4)}%`;
-    } else if (quadrant === 3) { // 第三象限（左下角）
-      // 将urgency 1-5映射到25%-75%
-      return `${25 + (task.urgency - 1) * (50 / 4)}%`;
-    } else if (quadrant === 4) { // 第四象限（右下角）
-      // 将urgency 6-10映射到25%-75%
-      return `${25 + (task.urgency - 6) * (50 / 4)}%`;
-    }
-  }
-  
-  return `${50}%`; // 默认返回中心位置
+  // 默认视图下的位置
+  return `${10 + (goal.urgency - 1) * 8.5}%`;
 }
 
-// 获取任务Y坐标位置
-function getTaskPositionY(task) {
-  // 特殊处理[5,5]坐标点，仅在默认视图下显示在中央虚线交汇处
-  if (task.importance === 5 && task.urgency === 5 && activeQuadrant.value === 0) {
+// 获取目标Y坐标位置
+function getGoalPositionY(goal) {
+  // 特殊处理[5,5]坐标点，显示在中央虚线交汇处
+  if (goal.importance === 5 && goal.urgency === 5) {
     return '50%';
   }
   
-  if (activeQuadrant.value === 0) {
-    // 默认视图下的位置
-    return `${90 - (task.importance - 1) * 8.5}%`;
-  } else {
-    // 放大视图下的位置
-    const quadrant = getTaskQuadrant(task);
-    
-    // 确保只计算当前活动象限的任务位置
-    if (quadrant !== activeQuadrant.value) {
-      return '50%'; // 非当前象限的任务不应显示，但为防止错误，返回中心位置
-    }
-    
-    // 在放大视图中，将任务点映射到更集中的可见区域（25%-75%）
-    // 第一象限：纵轴范围5-10
-    // 第二象限：纵轴范围5-10
-    // 第三象限：纵轴范围0-5
-    // 第四象限：纵轴范围0-5
-    if (quadrant === 1 || quadrant === 2) { // 上方象限（重要）
-      // 将importance 6-10映射到25%-75%
-      return `${25 + (10 - task.importance) * (50 / 4)}%`;
-    } else if (quadrant === 3 || quadrant === 4) { // 下方象限（不重要）
-      // 将importance 1-5映射到25%-75%
-      return `${25 + (5 - task.importance) * (50 / 4)}%`;
-    }
-  }
-  
-  return `${50}%`; // 默认返回中心位置
+  // 默认视图下的位置
+  return `${90 - (goal.importance - 1) * 8.5}%`;
 }
 
-
-// 获取提示框X坐标位置
-function getTooltipPositionX(task) {
-  // 添加水平偏移量，确保提示框显示在任务点的右侧
-  const horizontalOffset = 40; // 像素偏移，避免遮挡心情图标
-  
-  if (activeQuadrant.value === 0) {
-    // 全局视图下，根据紧急度计算位置，并添加偏移
-    const basePosition = Math.min(85, 10 + (task.urgency - 1) * 8.5);
-    return `calc(${basePosition}% + ${horizontalOffset}px)`;
-  } else {
-    // 放大视图下，提示框位置需要调整
-    const quadrant = getTaskQuadrant(task);
-    
-    // 确保只计算当前活动象限的任务提示框位置
-    if (quadrant !== activeQuadrant.value) {
-      return '50%'; // 非当前象限的任务不应显示，但为防止错误，返回中心位置
-    }
-    
-    if (quadrant === 1 || quadrant === 4) { // 右侧象限（紧急）
-      // 将urgency 5-10映射到提示框位置
-      const position = 25 + (task.urgency - 5) * (50 / 5);
-      // 确保提示框不会超出边界，并添加偏移
-      return `calc(${Math.min(70, position + 5)}% + ${horizontalOffset}px)`;
-    } else if (quadrant === 2 || quadrant === 3) { // 左侧象限（不紧急）
-      // 将urgency 1-5映射到提示框位置
-      const position = 25 + (task.urgency - 1) * (50 / 4);
-      // 确保提示框不会超出边界，并添加偏移
-      return `calc(${Math.min(70, position + 5)}% + ${horizontalOffset}px)`;
-    }
-    return `calc(50% + ${horizontalOffset}px)`; // 默认返回中心位置加偏移
-  }
+// 进入目标的ToDoList清单
+function enterGoalTodoList(goal) {
+  emit('enter-todo-list', goal);
 }
 
-// 获取提示框Y坐标位置
-function getTooltipPositionY(task) {
-  // 添加垂直偏移量，确保提示框不会遮挡任务点和文本框
-  const verticalOffset = -20; // 像素偏移，向上偏移避免遮挡文本框
-  
-  if (activeQuadrant.value === 0) {
-    // 全局视图下，根据重要度计算位置，并添加偏移
-    const basePosition = Math.min(80, 90 - (task.importance - 1) * 8.5);
-    return `calc(${basePosition}% + ${verticalOffset}px)`;
-  } else {
-    // 放大视图下，提示框位置需要调整
-    const quadrant = getTaskQuadrant(task);
-    
-    // 确保只计算当前活动象限的任务提示框位置
-    if (quadrant !== activeQuadrant.value) {
-      return '50%'; // 非当前象限的任务不应显示，但为防止错误，返回中心位置
-    }
-    
-    if (quadrant === 1 || quadrant === 2) { // 上方象限（重要）
-      // 将importance 5-10映射到提示框位置
-      const position = 25 + (10 - task.importance) * (50 / 5);
-      // 确保提示框不会超出边界，并添加偏移
-      return `calc(${Math.min(70, position + 5)}% + ${verticalOffset}px)`;
-    } else if (quadrant === 3 || quadrant === 4) { // 下方象限（不重要）
-      // 将importance 1-5映射到提示框位置
-      const position = 25 + (5 - task.importance) * (50 / 4);
-      // 确保提示框不会超出边界，并添加偏移
-      return `calc(${Math.min(70, position + 5)}% + ${verticalOffset}px)`;
-    }
-    return `calc(50% + ${verticalOffset}px)`; // 默认返回中心位置加偏移
-  }
-}
-
-// 获取象限名称
-function getQuadrantName(quadrant) {
-  switch (quadrant) {
-    case 1: return '重要紧急';
-    case 2: return '重要不紧急';
-    case 3: return '不重要但紧急';
-    case 4: return '不重要不紧急';
-    default: return '';
-  }
-}
-
-// 处理任务组鼠标进入事件
-function handleGroupMouseEnter(group) {
-  if (group.tasks.length === 1) {
-    hoveredTask.value = group.tasks[0];
-    hoveredTaskGroup.value = null;
-  } else {
-    hoveredTask.value = null;
-    hoveredTaskGroup.value = group;
-  }
-}
-
-// 处理任务组鼠标离开事件
-const tooltipHideTimeout = ref(null); // 添加一个变量来存储定时器ID
-
-function handleGroupMouseLeave() {
-  // 如果鼠标在详情框内，则不隐藏详情框
-  if (!keepTooltipVisible.value) {
-    // 设置一个延迟，给用户足够的时间将鼠标移动到提示框上
-    tooltipHideTimeout.value = setTimeout(() => {
-      // 只有当keepTooltipVisible为false时才隐藏提示框
-      if (!keepTooltipVisible.value) {
-        hoveredTask.value = null;
-        hoveredTaskGroup.value = null;
-      }
-    }, 300); // 300毫秒的延迟，可以根据需要调整
-  }
-}
-
-// 显示任务列表（多任务点击时）
-function showTaskList(group) {
-  if (!props.editMode) return;
-  // 可以显示一个任务选择对话框，这里暂时选择第一个任务
-  if (group.tasks.length > 0) {
-    emit('edit-task', group.tasks[0]);
-  }
-}
-
-// 编辑任务
-function editTask(task) {
-  if (!props.editMode) return;
-  emit('edit-task', task);
-}
-
-// 编辑任务标题
-function editTaskTitle(task, event) {
+// 编辑目标标题
+function editGoalTitle(goal, event) {
   // 阻止默认行为和冒泡，防止页面刷新
   if (event) {
     event.preventDefault();
@@ -948,17 +578,48 @@ function editTaskTitle(task, event) {
   }
   
   // 使用更安全的方式获取新标题
-  const newTitle = window.prompt('请输入新的任务名称:', task.title);
+  const newTitle = window.prompt('请输入新的目标名称:', goal.title);
   
   // 只有当用户输入了有效的新标题时才更新
-  if (newTitle !== null && newTitle.trim() !== '' && newTitle !== task.title) {
-    const updatedTask = { ...task, title: newTitle.trim() };
-    taskStore.updateTask(updatedTask);
+  if (newTitle !== null && newTitle.trim() !== '' && newTitle !== goal.title) {
+    const updatedGoal = { ...goal, title: newTitle.trim() };
+    taskStore.updateGoal(updatedGoal);
+  }
+}
+
+// 处理坐标系空白区域点击
+function handleCoordinateClick(event) {
+  // 只有当点击的是背景元素时才创建新目标
+  if (event.target === event.currentTarget || 
+      event.target.tagName === 'svg' || 
+      event.target.tagName === 'rect' || 
+      event.target.tagName === 'line' || 
+      event.target.tagName === 'text') {
+    
+    // 获取坐标系容器的位置和尺寸
+    const container = event.currentTarget;
+    const rect = container.getBoundingClientRect();
+    
+    // 计算鼠标在容器内的相对位置（百分比）
+    const relativeX = (event.clientX - rect.left) / rect.width;
+    const relativeY = (event.clientY - rect.top) / rect.height;
+    
+    // 将相对位置转换为重要度和紧急度（1-10范围）
+    // X轴对应紧急度，Y轴对应重要度（反向）
+    let urgency = Math.round(relativeX * 10);
+    let importance = Math.round((1 - relativeY) * 10);
+    
+    // 确保值在1-10范围内
+    urgency = Math.max(1, Math.min(10, urgency));
+    importance = Math.max(1, Math.min(10, importance));
+    
+    // 触发创建目标事件
+    emit('create-goal', { urgency, importance });
   }
 }
 
 // 开始拖拽
-function startDrag(event, task) {
+function startDrag(event, goal) {
   // 阻止默认行为和冒泡
   event.preventDefault();
   event.stopPropagation();
@@ -966,16 +627,16 @@ function startDrag(event, task) {
   // 设置拖拽状态
   isDragging.value = true;
   isClick.value = true; // 初始状态假设是点击
-  draggedTask.value = { ...task };
+  draggedGoal.value = { ...goal };
   dragStartX.value = event.clientX;
   dragStartY.value = event.clientY;
   dragStartTime.value = Date.now(); // 记录鼠标按下的时间
   
-  // 创建跟随鼠标的心情图标元素，但暂时不显示
+  // 创建跟随鼠标的图标元素，但暂时不显示
   // 只有确认是拖拽操作时才显示
-  const emoji = moodEmojis[task.mood] || moodEmojis.smile;
+  const icon = goal.marked ? '⭐' : '📌';
   dragIconElement.value = document.createElement('div');
-  dragIconElement.value.textContent = emoji;
+  dragIconElement.value.textContent = icon;
   dragIconElement.value.style.position = 'fixed';
   dragIconElement.value.style.left = `${event.clientX}px`;
   dragIconElement.value.style.top = `${event.clientY}px`;
@@ -997,7 +658,7 @@ function startDrag(event, task) {
 
 // 拖拽中
 function onDrag(event) {
-  if (!isDragging.value || !draggedTask.value) return;
+  if (!isDragging.value || !draggedGoal.value) return;
   
   // 计算鼠标移动距离
   const deltaX = Math.abs(event.clientX - dragStartX.value);
@@ -1032,11 +693,11 @@ function onDrag(event) {
   newUrgency = Math.max(1, Math.min(10, newUrgency));
   newImportance = Math.max(1, Math.min(10, newImportance));
   
-  // 更新拖拽任务的值（但不立即保存到数据库）
-  draggedTask.value.urgency = newUrgency;
-  draggedTask.value.importance = newImportance;
+  // 更新拖拽目标的值（但不立即保存到数据库）
+  draggedGoal.value.urgency = newUrgency;
+  draggedGoal.value.importance = newImportance;
   
-  // 更新跟随鼠标的心情图标位置
+  // 更新跟随鼠标的图标位置
   if (dragIconElement.value) {
     dragIconElement.value.style.left = `${event.clientX}px`;
     dragIconElement.value.style.top = `${event.clientY}px`;
@@ -1045,27 +706,27 @@ function onDrag(event) {
 
 // 停止拖拽
 function stopDrag(event) {
-  if (!isDragging.value || !draggedTask.value) return;
+  if (!isDragging.value || !draggedGoal.value) return;
   
   // 计算时间差
   const timeDiff = Date.now() - dragStartTime.value;
   
-  // 如果是点击操作（移动距离小且时间短），则编辑任务标题
+  // 如果是点击操作（移动距离小且时间短），则编辑目标标题
   if (isClick.value && timeDiff < clickThreshold) {
     // 移除拖拽相关元素和事件
     cleanupDrag();
     
-    // 调用编辑任务标题函数
-    editTaskTitle(draggedTask.value, event);
+    // 调用编辑目标标题函数
+    editGoalTitle(draggedGoal.value, event);
     return;
   }
   
-  // 如果是拖拽操作，则更新任务位置
+  // 如果是拖拽操作，则更新目标位置
   // 计算新的优先级
-  draggedTask.value.priority = (draggedTask.value.importance + draggedTask.value.urgency) / 2;
+  draggedGoal.value.priority = (draggedGoal.value.importance + draggedGoal.value.urgency) / 2;
   
-  // 保存更新后的任务
-  taskStore.updateTask(draggedTask.value);
+  // 保存更新后的目标
+  taskStore.updateGoal(draggedGoal.value);
   
   // 清理拖拽相关元素和事件
   cleanupDrag();
@@ -1073,7 +734,7 @@ function stopDrag(event) {
 
 // 清理拖拽相关元素和事件
 function cleanupDrag() {
-  // 移除跟随鼠标的心情图标
+  // 移除跟随鼠标的图标
   if (dragIconElement.value && dragIconElement.value.parentNode) {
     dragIconElement.value.parentNode.removeChild(dragIconElement.value);
     dragIconElement.value = null;
@@ -1081,7 +742,7 @@ function cleanupDrag() {
   
   // 重置拖拽状态
   isDragging.value = false;
-  draggedTask.value = null;
+  draggedGoal.value = null;
   isClick.value = true;
   
   // 移除全局事件监听
@@ -1108,18 +769,7 @@ onUnmounted(() => {
     dragIconElement.value.parentNode.removeChild(dragIconElement.value);
     dragIconElement.value = null;
   }
-  
-  // 清除提示框隐藏定时器
-  if (tooltipHideTimeout.value) {
-    clearTimeout(tooltipHideTimeout.value);
-    tooltipHideTimeout.value = null;
-  }
 });
-
-// 完成任务
-function completeTask(taskId) {
-  taskStore.completeTask(taskId);
-}
 </script>
 
 <style>
