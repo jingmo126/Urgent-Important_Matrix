@@ -64,14 +64,14 @@
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                   <div class="bg-gradient-to-r from-yellow-200 to-orange-200 text-orange-800 px-3 py-1 rounded-full text-sm font-bold shadow-md">
-                    {{ task.importance }}/10
+                    {{ Math.round(task.importance) }}/10
                   </div>
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                   <div class="bg-gradient-to-r from-red-200 to-pink-200 text-red-800 px-3 py-1 rounded-full text-sm font-bold shadow-md">
-                    {{ task.urgency }}/10
+                    {{ Math.round(task.urgency) }}/10
                   </div>
                 </div>
               </td>

@@ -40,6 +40,13 @@
             {{ isSelectAll ? '取消全选' : '全选' }}
           </button>
           <button 
+            @click="completeSelected" 
+            class="px-4 py-2 rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 transition-all flex items-center gap-2"
+            :disabled="selectedCount === 0"
+          >
+            ✅ 完成选中
+          </button>
+          <button 
             @click="deleteSelected" 
             class="px-4 py-2 rounded-full bg-red-100 text-red-600 font-medium hover:bg-red-200 transition-all flex items-center gap-2"
             :disabled="selectedCount === 0"
@@ -81,16 +88,23 @@
               <td class="px-6 py-4 text-gray-600">{{ goal.description || '-' }}</td>
               <td class="px-6 py-4">
                 <div class="w-16 h-8 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 flex items-center justify-center text-blue-600 font-medium">
-                  {{ goal.importance }}
+                  {{ Math.round(goal.importance) }}
                 </div>
               </td>
               <td class="px-6 py-4">
                 <div class="w-16 h-8 rounded-full bg-gradient-to-r from-orange-100 to-orange-200 flex items-center justify-center text-orange-600 font-medium">
-                  {{ goal.urgency }}
+                  {{ Math.round(goal.urgency) }}
                 </div>
               </td>
               <td class="px-6 py-4">
                 <div class="flex items-center gap-2">
+                  <button 
+                    @click="editGoal(goal)" 
+                    class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
+                    title="编辑目标"
+                  >
+                    ✏️
+                  </button>
                   <button 
                     @click="enterGoalActions(goal)" 
                     class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
@@ -99,11 +113,11 @@
                     📋
                   </button>
                   <button 
-                    @click="deleteGoal(goal)" 
-                    class="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-all"
-                    title="删除目标"
+                    @click="addActionForGoal(goal)" 
+                    class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
+                    title="新建行动"
                   >
-                    🗑️
+                    ➕
                   </button>
                   <button 
                     @click="toggleGoalMark(goal)" 
@@ -112,16 +126,49 @@
                   >
                     {{ goal.marked ? '⭐' : '☆' }}
                   </button>
-                  <button 
-                    @click="completeGoal(goal)" 
-                    class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
-                    :title="goal.completed ? '取消完成' : '完成目标'"
-                  >
-                    {{ goal.completed ? '↩️' : '✅' }}
-                  </button>
                 </div>
               </td>
             </tr>
+            <!-- 编辑模式的目标行 -->
+            <template v-if="editingItem && editingItem.type === 'goal' && editingItem.id === goal.id && editingItem.filter === filter.value">
+              <tr class="border-b border-pink-100 bg-pink-50 transition-all">
+                <td class="px-6 py-4">
+                  <input type="checkbox" v-model="selectedIds" :value="goal.id" class="w-5 h-5 rounded-full border-2 border-purple-400 text-purple-600 focus:ring-purple-500"/>
+                </td>
+                <td class="px-6 py-4">
+                  <input v-model="editForm.title" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="目标名称"/>
+                </td>
+                <td class="px-6 py-4">
+                  <input v-model="editForm.description" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="目标描述"/>
+                </td>
+                <td class="px-6 py-4">
+                  <input v-model.number="editForm.importance" type="number" min="1" max="10" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"/>
+                </td>
+                <td class="px-6 py-4">
+                  <input v-model.number="editForm.urgency" type="number" min="1" max="10" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"/>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-2">
+                    <button 
+                      @click="saveEdit" 
+                      class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
+                      title="完成修改"
+                    >
+                      ✅
+                    </button>
+                    <button 
+                      @click="cancelEdit" 
+                      class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+                      title="取消修改"
+                    >
+                      ❌
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </template>
+            <template v-else>
+            </template>
           </tbody>
         </table>
         <div v-if="filteredGoals.length === 0" class="py-10 text-center text-gray-500">暂无目标数据</div>
@@ -129,6 +176,14 @@
 
       <!-- 仅行动视图 -->
       <div v-else-if="filter === 'actions'">
+        <div class="mb-4 flex justify-end">
+          <button 
+            @click="showAddActionForm = true"
+            class="px-4 py-2 rounded-full bg-gradient-to-r from-pink-400 to-purple-400 text-white font-medium hover:shadow-lg transition-all flex items-center gap-2"
+          >
+            ➕ 新建行动
+          </button>
+        </div>
         <table class="min-w-full">
           <thead>
             <tr class="bg-gradient-to-r from-pink-100 to-purple-100 text-left">
@@ -154,16 +209,16 @@
               <td class="px-6 py-4 font-medium text-purple-900">{{ action.title }}</td>
               <td class="px-6 py-4 text-gray-600">{{ action.description || '-' }}</td>
               <td class="px-6 py-4">
-                <span class="px-3 py-1 rounded-full bg-pink-100 text-pink-600 text-sm">{{ action.goalTitle || '无' }}</span>
+                <span class="px-3 py-1 rounded-full bg-pink-100 text-pink-600 text-sm">{{ getGoalTitleById(action.goalId) || '无' }}</span>
               </td>
               <td class="px-6 py-4">
                 <div class="flex items-center gap-2">
                   <button 
-                    @click="deleteAction(action)" 
-                    class="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-all"
-                    title="删除行动"
+                    @click="editAction(action)" 
+                    class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
+                    title="编辑行动"
                   >
-                    🗑️
+                    ✏️
                   </button>
                   <button 
                     @click="toggleActionMark(action)" 
@@ -172,12 +227,79 @@
                   >
                     {{ action.marked ? '⭐' : '☆' }}
                   </button>
+                </div>
+              </td>
+            </tr>
+            <!-- 编辑模式的行动行 -->
+            <template v-if="editingItem && editingItem.type === 'action' && editingItem.id === action.id && editingItem.filter === filter.value">
+              <tr class="border-b border-pink-100 bg-pink-50 transition-all">
+                <td class="px-6 py-4">
+                  <input type="checkbox" v-model="selectedIds" :value="action.id" class="w-5 h-5 rounded-full border-2 border-purple-400 text-purple-600 focus:ring-purple-500"/>
+                </td>
+                <td class="px-6 py-4">
+                  <input v-model="editForm.title" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动名称"/>
+                </td>
+                <td class="px-6 py-4">
+                  <input v-model="editForm.description" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动描述"/>
+                </td>
+                <td class="px-6 py-4">
+                  <select v-model="editForm.goalId" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option value="">无</option>
+                    <option v-for="goal in goals" :key="goal.id" :value="goal.id">{{ goal.title }}</option>
+                  </select>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-2">
+                    <button 
+                      @click="saveEdit" 
+                      class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
+                      title="完成修改"
+                    >
+                      ✅
+                    </button>
+                    <button 
+                      @click="cancelEdit" 
+                      class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+                      title="取消修改"
+                    >
+                      ❌
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </template>
+            <template v-else>
+            </template>
+            <!-- 新建行动行 -->
+            <tr v-if="showAddActionForm && filter === 'actions'" class="border-b border-pink-100 bg-pink-50 transition-all">
+              <td class="px-6 py-4"></td>
+              <td class="px-6 py-4">
+                <input v-model="newActionForm.title" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动名称"/>
+              </td>
+              <td class="px-6 py-4">
+                <input v-model="newActionForm.description" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动描述"/>
+              </td>
+              <td class="px-6 py-4">
+                <select v-model="newActionForm.goalId" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                  <option value="">无</option>
+                  <option v-for="goal in goals" :key="goal.id" :value="goal.id">{{ goal.title }}</option>
+                </select>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-2">
                   <button 
-                    @click="completeAction(action)" 
-                    class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
-                    :title="action.completed ? '取消完成' : '完成行动'"
+                    @click="saveNewAction" 
+                    class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
+                    title="保存行动"
                   >
-                    {{ action.completed ? '↩️' : '✅' }}
+                    ✅
+                  </button>
+                  <button 
+                    @click="cancelNewAction" 
+                    class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+                    title="取消"
+                  >
+                    ❌
                   </button>
                 </div>
               </td>
@@ -189,9 +311,18 @@
 
       <!-- 全部视图 -->
       <div v-else-if="filter === 'all'">
+        <div class="mb-4 flex justify-end">
+          <button 
+            @click="showAddActionForm = true"
+            class="px-4 py-2 rounded-full bg-gradient-to-r from-pink-400 to-purple-400 text-white font-medium hover:shadow-lg transition-all flex items-center gap-2"
+          >
+            ➕ 新建行动
+          </button>
+        </div>
         <table class="min-w-full">
           <thead>
             <tr class="bg-gradient-to-r from-pink-100 to-purple-100 text-left">
+              <th class="px-6 py-4"></th>
               <th class="px-6 py-4 font-bold text-purple-700">名称</th>
               <th class="px-6 py-4 font-bold text-purple-700">描述</th>
               <th class="px-6 py-4 font-bold text-purple-700">重要度</th>
@@ -207,34 +338,43 @@
                 class="border-b border-purple-200 hover:bg-purple-50 transition-all"
                 :class="{ 'line-through text-gray-400': goal.completed }"
               >
+                <td class="px-6 py-5">
+                  <button 
+                    @click="toggleGoalExpand(goal.id)" 
+                    class="p-2 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200 transition-all"
+                    title="展开/收起行动"
+                  >
+                    {{ expandedGoals.includes(goal.id) ? '▼' : '▶' }}
+                  </button>
+                </td>
                 <td class="px-6 py-5 font-bold text-xl text-purple-800">🎯 {{ goal.title }}</td>
                 <td class="px-6 py-5 text-gray-600">{{ goal.description || '-' }}</td>
                 <td class="px-6 py-5">
                   <div class="w-16 h-8 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 flex items-center justify-center text-blue-600 font-medium">
-                    {{ goal.importance }}
+                    {{ Math.round(goal.importance) }}
                   </div>
                 </td>
                 <td class="px-6 py-5">
                   <div class="w-16 h-8 rounded-full bg-gradient-to-r from-orange-100 to-orange-200 flex items-center justify-center text-orange-600 font-medium">
-                    {{ goal.urgency }}
+                    {{ Math.round(goal.urgency) }}
                   </div>
                 </td>
                 <td class="px-6 py-5">-</td>
                 <td class="px-6 py-5">
                   <div class="flex items-center gap-2">
                     <button 
-                      @click="toggleGoalExpand(goal.id)" 
-                      class="p-2 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200 transition-all"
-                      title="展开/收起行动"
+                      @click="editGoal(goal)" 
+                      class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
+                      title="编辑目标"
                     >
-                      {{ expandedGoals.includes(goal.id) ? '▼' : '▶' }}
+                      ✏️
                     </button>
                     <button 
-                      @click="deleteGoal(goal)" 
-                      class="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-all"
-                      title="删除目标"
+                      @click="addActionForGoal(goal)" 
+                      class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
+                      title="新建行动"
                     >
-                      🗑️
+                      ➕
                     </button>
                     <button 
                       @click="toggleGoalMark(goal)" 
@@ -243,57 +383,183 @@
                     >
                       {{ goal.marked ? '⭐' : '☆' }}
                     </button>
+                  </div>
+                </td>
+              </tr>
+            <!-- 编辑模式的目标行 -->
+            <template v-if="editingItem && editingItem.type === 'goal' && editingItem.id === goal.id && editingItem.filter === filter.value">
+              <tr class="border-b border-purple-200 bg-purple-50 transition-all">
+                <td class="px-6 py-5">
+                  <button 
+                    @click="toggleGoalExpand(goal.id)" 
+                    class="p-2 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200 transition-all"
+                    title="展开/收起行动"
+                  >
+                    {{ expandedGoals.includes(goal.id) ? '▼' : '▶' }}
+                  </button>
+                </td>
+                <td class="px-6 py-5">
+                  <input v-model="editForm.title" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="目标名称"/>
+                </td>
+                <td class="px-6 py-5">
+                  <input v-model="editForm.description" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="目标描述"/>
+                </td>
+                <td class="px-6 py-5">
+                  <input v-model.number="editForm.importance" type="number" min="1" max="10" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"/>
+                </td>
+                <td class="px-6 py-5">
+                  <input v-model.number="editForm.urgency" type="number" min="1" max="10" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"/>
+                </td>
+                <td class="px-6 py-5">-</td>
+                <td class="px-6 py-5">
+                  <div class="flex items-center gap-2">
                     <button 
-                      @click="completeGoal(goal)" 
-                      class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
-                      :title="goal.completed ? '取消完成' : '完成目标'"
+                      @click="saveEdit" 
+                      class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
+                      title="完成修改"
                     >
-                      {{ goal.completed ? '↩️' : '✅' }}
+                      ✅
+                    </button>
+                    <button 
+                      @click="cancelEdit" 
+                      class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+                      title="取消修改"
+                    >
+                      ❌
                     </button>
                   </div>
                 </td>
               </tr>
+            </template>
+            <template v-else>
+              <tr 
+                class="border-b border-purple-200 hover:bg-purple-50 transition-all"
+                :class="{ 'line-through text-gray-400': goal.completed }"
+              >
+                <td class="px-6 py-5">
+                  <button 
+                    @click="toggleGoalExpand(goal.id)" 
+                    class="p-2 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200 transition-all"
+                    title="展开/收起行动"
+                  >
+                    {{ expandedGoals.includes(goal.id) ? '▼' : '▶' }}
+                  </button>
+                </td>
+                <td class="px-6 py-5 font-bold text-xl text-purple-800">🎯 {{ goal.title }}</td>
+                <td class="px-6 py-5 text-gray-600">{{ goal.description || '-' }}</td>
+                <td class="px-6 py-5">
+                  <div class="w-16 h-8 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 flex items-center justify-center text-blue-600 font-medium">
+                    {{ Math.round(goal.importance) }}
+                  </div>
+                </td>
+                <td class="px-6 py-5">
+                  <div class="w-16 h-8 rounded-full bg-gradient-to-r from-orange-100 to-orange-200 flex items-center justify-center text-orange-600 font-medium">
+                    {{ Math.round(goal.urgency) }}
+                  </div>
+                </td>
+                <td class="px-6 py-5">-</td>
+                <td class="px-6 py-5">
+                  <div class="flex items-center gap-2">
+                    <button 
+                      @click="editGoal(goal)" 
+                      class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
+                      title="编辑目标"
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      @click="addActionForGoal(goal)" 
+                      class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
+                      title="新建行动"
+                    >
+                      ➕
+                    </button>
+                    <button 
+                      @click="toggleGoalMark(goal)" 
+                      class="p-2 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition-all"
+                      :title="goal.marked ? '取消标记' : '标记目标'"
+                    >
+                      {{ goal.marked ? '⭐' : '☆' }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </template>
               <!-- 展开的行动 -->
               <template v-if="expandedGoals.includes(goal.id)">
-                <tr 
-                  v-for="action in goal.actions" 
-                  :key="action.id"
-                  class="border-b border-pink-100 bg-pink-50/50 hover:bg-pink-50 transition-all"
-                  :class="{ 'line-through text-gray-400': action.completed }"
-                >
-                  <td class="px-6 pl-16 py-3 font-medium text-purple-700">📝 {{ action.title }}</td>
-                  <td class="px-6 py-3 text-gray-600">{{ action.description || '-' }}</td>
-                  <td class="px-6 py-3"></td>
-                  <td class="px-6 py-3"></td>
-                  <td class="px-6 py-3">
-                    <span class="px-3 py-1 rounded-full bg-pink-100 text-pink-600 text-sm">{{ goal.title }}</span>
-                  </td>
-                  <td class="px-6 py-3">
-                    <div class="flex items-center gap-2">
-                      <button 
-                        @click="deleteAction(action)" 
-                        class="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-all"
-                        title="删除行动"
-                      >
-                        🗑️
-                      </button>
-                      <button 
-                        @click="toggleActionMark(action)" 
-                        class="p-1.5 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition-all"
-                        :title="action.marked ? '取消标记' : '标记行动'"
-                      >
-                        {{ action.marked ? '⭐' : '☆' }}
-                      </button>
-                      <button 
-                        @click="completeAction(action)" 
-                        class="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
-                        :title="action.completed ? '取消完成' : '完成行动'"
-                      >
-                        {{ action.completed ? '↩️' : '✅' }}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <template v-for="action in goal.actions" :key="action.id">
+                  <!-- 编辑模式的行动行 -->
+                  <template v-if="editingItem && editingItem.type === 'action' && editingItem.id === action.id && editingItem.filter === filter.value">
+                    <tr class="border-b border-pink-100 bg-pink-50 transition-all">
+                      <td class="px-6 pl-16 py-3"></td>
+                      <td class="px-6 py-3">
+                        <input v-model="editForm.title" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动名称"/>
+                      </td>
+                      <td class="px-6 py-3">
+                        <input v-model="editForm.description" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动描述"/>
+                      </td>
+                      <td class="px-6 py-3"></td>
+                      <td class="px-6 py-3"></td>
+                      <td class="px-6 py-3">
+                        <select v-model="editForm.goalId" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                          <option value="">无</option>
+                          <option v-for="goalItem in goals" :key="goalItem.id" :value="goalItem.id">{{ goalItem.title }}</option>
+                        </select>
+                      </td>
+                      <td class="px-6 py-3">
+                        <div class="flex items-center gap-2">
+                          <button 
+                            @click="saveEdit" 
+                            class="p-1.5 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
+                            title="完成修改"
+                          >
+                            ✅
+                          </button>
+                          <button 
+                            @click="cancelEdit" 
+                            class="p-1.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+                            title="取消修改"
+                          >
+                            ❌
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
+                  <template v-else>
+                    <tr 
+                      class="border-b border-pink-100 bg-pink-50/50 hover:bg-pink-50 transition-all"
+                      :class="{ 'line-through text-gray-400': action.completed }"
+                    >
+                      <td class="px-6 pl-16 py-3"></td>
+                      <td class="px-6 py-3 font-medium text-purple-700">📝 {{ action.title }}</td>
+                      <td class="px-6 py-3 text-gray-600">{{ action.description || '-' }}</td>
+                      <td class="px-6 py-3"></td>
+                      <td class="px-6 py-3"></td>
+                      <td class="px-6 py-3">
+                        <span class="px-3 py-1 rounded-full bg-pink-100 text-pink-600 text-sm">{{ goal.title }}</span>
+                      </td>
+                      <td class="px-6 py-3">
+                        <div class="flex items-center gap-2">
+                          <button 
+                            @click="editAction(action)" 
+                            class="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
+                            title="编辑行动"
+                          >
+                            ✏️
+                          </button>
+                          <button 
+                            @click="toggleActionMark(action)" 
+                            class="p-1.5 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition-all"
+                            :title="action.marked ? '取消标记' : '标记行动'"
+                          >
+                            {{ action.marked ? '⭐' : '☆' }}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
+                </template>
               </template>
             </template>
           </tbody>
@@ -325,6 +591,10 @@ const selectedIds = ref([]);
 const isSelectAll = ref(false);
 const expandedGoals = ref([]);
 const currentGoal = ref(null);
+const showAddActionForm = ref(false);
+const editingItem = ref(null);
+const editForm = ref({});
+const newActionForm = ref({ title: '', description: '', goalId: '' });
 
 // 计算属性
 const goals = computed(() => taskStore.goals);
@@ -335,10 +605,12 @@ const selectedCount = computed(() => selectedIds.value.length);
 
 // 目标与行动组合数据
 const goalsWithActions = computed(() => {
-  return goals.value.map(goal => ({
+  // 在"全部"视图下返回所有目标，在其他视图下只返回未完成的目标
+  const filteredGoals = filter.value === 'all' ? goals.value : goals.value.filter(goal => !goal.completed);
+  return filteredGoals.map(goal => ({
     ...goal,
-    actions: actions.value.filter(action => action.goalId === goal.id && !action.completed)
-  })).filter(goal => !goal.completed);
+    actions: actions.value.filter(action => action.goalId === goal.id && (!goal.completed || filter.value === 'all'))
+  }));
 });
 
 // 生命周期
@@ -376,6 +648,32 @@ function toggleSelectAll() {
     selectedIds.value = isSelectAll.value ? filteredGoals.value.map(g => g.id) : [];
   } else if (filter.value === 'actions') {
     selectedIds.value = isSelectAll.value ? filteredActions.value.map(a => a.id) : [];
+  }
+}
+
+// 批量完成选中项
+async function completeSelected() {
+  if (selectedIds.value.length === 0) return;
+  
+  const confirmMsg = filter.value === 'goals' 
+    ? '确定要完成选中的目标吗？' 
+    : '确定要完成选中的行动吗？';
+  
+  if (confirm(confirmMsg)) {
+    try {
+      if (filter.value === 'goals') {
+        await Promise.all(selectedIds.value.map(id => taskStore.completeGoal(id)));
+      } else {
+        await Promise.all(selectedIds.value.map(id => taskStore.completeAction(id)));
+      }
+      selectedIds.value = [];
+      isSelectAll.value = false;
+      notification.value = '完成成功';
+      setTimeout(() => notification.value = '', 3000);
+    } catch (error) {
+      notification.value = '操作失败，请稍后再试';
+      setTimeout(() => notification.value = '', 3000);
+    }
   }
 }
 
@@ -476,8 +774,14 @@ async function completeGoal(goal) {
       await taskStore.restoreGoal(goal.id);
       notification.value = '目标已恢复';
     } else {
+      // 完成目标
       await taskStore.completeGoal(goal.id);
-      notification.value = '目标已完成';
+      // 同时完成该目标下的所有行动
+      const goalActions = taskStore.actions.filter(action => action.goalId === goal.id);
+      for (const action of goalActions) {
+        await taskStore.completeAction(action.id);
+      }
+      notification.value = '目标及所有行动已完成';
     }
     setTimeout(() => notification.value = '', 3000);
   } catch (error) {
@@ -501,6 +805,95 @@ async function completeAction(action) {
     notification.value = '操作失败，请稍后再试';
     setTimeout(() => notification.value = '', 3000);
   }
+}
+
+// 获取目标标题
+function getGoalTitleById(goalId) {
+  const goal = goals.value.find(g => g.id === goalId);
+  return goal ? goal.title : null;
+}
+
+// 为目标添加行动
+function addActionForGoal(goal) {
+  showAddActionForm.value = true;
+  currentGoal.value = goal.id;
+}
+
+// 编辑目标
+function editGoal(goal) {
+  editingItem.value = { id: goal.id, type: 'goal', filter: filter.value };
+  editForm.value = {
+    title: goal.title,
+    description: goal.description,
+    importance: goal.importance,
+    urgency: goal.urgency
+  };
+}
+
+// 编辑行动
+function editAction(action) {
+  editingItem.value = { id: action.id, type: 'action', filter: filter.value };
+  editForm.value = {
+    title: action.title,
+    description: action.description,
+    goalId: action.goalId
+  };
+}
+
+// 保存编辑
+async function saveEdit() {
+  try {
+    if (editingItem.value.type === 'goal') {
+      await taskStore.updateGoal({ id: editingItem.value.id, ...editForm.value });
+      notification.value = '目标更新成功';
+    } else {
+      await taskStore.updateAction({ id: editingItem.value.id, ...editForm.value });
+      notification.value = '行动更新成功';
+    }
+    cancelEdit();
+    setTimeout(() => notification.value = '', 3000);
+  } catch (error) {
+    notification.value = '更新失败，请稍后再试';
+    setTimeout(() => notification.value = '', 3000);
+  }
+}
+
+// 取消编辑
+function cancelEdit() {
+  editingItem.value = null;
+  editForm.value = {};
+}
+
+// 保存新行动
+async function saveNewAction() {
+  try {
+    if (!newActionForm.value.title.trim()) {
+      notification.value = '请输入行动名称';
+      setTimeout(() => notification.value = '', 3000);
+      return;
+    }
+    
+    // 如果设置了当前目标，则使用该目标ID
+    const actionData = {
+      ...newActionForm.value,
+      goalId: currentGoal.value || newActionForm.value.goalId
+    };
+    
+    await taskStore.addAction(actionData);
+    notification.value = '行动创建成功';
+    cancelNewAction();
+    setTimeout(() => notification.value = '', 3000);
+  } catch (error) {
+    notification.value = '创建失败，请稍后再试';
+    setTimeout(() => notification.value = '', 3000);
+  }
+}
+
+// 取消新建行动
+function cancelNewAction() {
+  showAddActionForm.value = false;
+  newActionForm.value = { title: '', description: '', goalId: '' };
+  currentGoal.value = null;
 }
 
 // 切换目标展开状态

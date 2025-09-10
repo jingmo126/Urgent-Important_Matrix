@@ -75,10 +75,10 @@ function openCreateGoalModal(position) {
 
 // 创建目标
 function createGoal(goal) {
-  // 设置默认值和计算优先级
+  // 设置默认值和计算优先级（使用与store中相同的加权算法）
   goal.importance = initialImportance.value;
   goal.urgency = initialUrgency.value;
-  goal.priority = (goal.importance + goal.urgency) / 2;
+  goal.priority = goal.importance * 0.4 + goal.urgency * 0.6;
   goal.marked = false;
   
   taskStore.addGoal(goal);

@@ -27,8 +27,8 @@
               :to="item.path"
               class="flex items-center px-4 py-3 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-lg"
               :class="{
-                'bg-gradient-to-r from-pink-400 to-purple-400 text-white shadow-lg': $route.path === item.path,
-                'bg-white/50 text-purple-700 hover:bg-white/80': $route.path !== item.path
+                'bg-gradient-to-r from-pink-400 to-purple-400 text-white shadow-lg': route.path === item.path,
+                'bg-white/50 text-purple-700 hover:bg-white/80': route.path !== item.path
               }"
             >
               <span class="mr-3 text-xl">
@@ -50,7 +50,10 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits, computed } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
 
 const props = defineProps({
   isOpen: {
