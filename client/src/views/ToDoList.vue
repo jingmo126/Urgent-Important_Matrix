@@ -819,7 +819,7 @@ async function completeAction(action) {
 // 为目标添加行动
 function addActionForGoal(goal) {
   // 如果在全部视图且目标未展开，则先展开目标
-  if (filter.value === 'all' && !expandedGoals.includes(goal.id)) {
+  if (filter.value === 'all' && !expandedGoals.value.includes(goal.id)) {
     toggleGoalExpand(goal.id);
   }
   
