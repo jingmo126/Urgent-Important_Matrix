@@ -34,19 +34,6 @@
         </div>
         <div class="flex items-center gap-4">
           <button 
-            @click="toggleSelectAll" 
-            class="px-4 py-2 rounded-full bg-gradient-to-r from-pink-400 to-purple-400 text-white font-medium hover:shadow-lg transition-all flex items-center gap-2"
-          >
-            {{ isSelectAll ? '取消全选' : '全选' }}
-          </button>
-          <button 
-            @click="completeSelected" 
-            class="px-4 py-2 rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 transition-all flex items-center gap-2"
-            :disabled="selectedCount === 0"
-          >
-            ✅ 完成选中
-          </button>
-          <button 
             @click="deleteSelected" 
             class="px-4 py-2 rounded-full bg-red-100 text-red-600 font-medium hover:bg-red-200 transition-all flex items-center gap-2"
             :disabled="selectedCount === 0"
@@ -72,9 +59,7 @@
         <table class="min-w-full">
           <thead>
             <tr class="bg-gradient-to-r from-pink-100 to-purple-100 text-left">
-              <th class="px-6 py-4 rounded-tl-2xl">
-                <input type="checkbox" v-model="isSelectAll" @change="toggleSelectAll" class="w-5 h-5 rounded-full border-2 border-purple-400 text-purple-600 focus:ring-purple-500"/>
-              </th>
+              <th class="px-6 py-4 rounded-tl-2xl"></th>
               <th class="px-6 py-4 font-bold text-purple-700">目标</th>
               <th class="px-6 py-4 font-bold text-purple-700">描述</th>
               <th class="px-6 py-4 font-bold text-purple-700">重要度</th>
@@ -90,7 +75,14 @@
               :class="{ 'line-through text-gray-400': goal.completed }"
             >
               <td class="px-6 py-4">
-                <input type="checkbox" v-model="selectedIds" :value="goal.id" class="w-5 h-5 rounded-full border-2 border-purple-400 text-purple-600 focus:ring-purple-500"/>
+                <button 
+                  @click="completeGoal(goal)"
+                  :class="['w-5 h-5 rounded-full border-2 border-purple-400 text-purple-600 focus:ring-purple-500', 
+                    goal.completed ? 'bg-green-100 border-green-500' : 'bg-white border-purple-400']"
+                  :title="goal.completed ? '恢复目标' : '完成目标'"
+                >
+                  <span v-if="goal.completed" class="text-green-600 text-xs">✓</span>
+                </button>
               </td>
               <td class="px-6 py-4 font-medium text-purple-900">{{ goal.title }}</td>
               <td class="px-6 py-4 text-gray-600">{{ goal.description || '-' }}</td>
@@ -140,9 +132,7 @@
             <!-- 编辑模式的目标行 -->
             <template v-if="editingItem && editingItem.type === 'goal' && editingItem.id === goal.id && editingItem.filter === filter.value">
               <tr class="border-b border-pink-100 bg-pink-50 transition-all">
-                <td class="px-6 py-4">
-                  <input type="checkbox" v-model="selectedIds" :value="goal.id" class="w-5 h-5 rounded-full border-2 border-purple-400 text-purple-600 focus:ring-purple-500"/>
-                </td>
+                <td class="px-6 py-4"></td>
                 <td class="px-6 py-4">
                   <input v-model="editForm.title" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="目标名称"/>
                 </td>
@@ -227,9 +217,7 @@
         <table class="min-w-full">
           <thead>
             <tr class="bg-gradient-to-r from-pink-100 to-purple-100 text-left">
-              <th class="px-6 py-4 rounded-tl-2xl">
-                <input type="checkbox" v-model="isSelectAll" @change="toggleSelectAll" class="w-5 h-5 rounded-full border-2 border-purple-400 text-purple-600 focus:ring-purple-500"/>
-              </th>
+              <th class="px-6 py-4 rounded-tl-2xl"></th>
               <th class="px-6 py-4 font-bold text-purple-700">行动</th>
               <th class="px-6 py-4 font-bold text-purple-700">描述</th>
               <th class="px-6 py-4 font-bold text-purple-700">所属目标</th>
@@ -244,7 +232,14 @@
               :class="{ 'line-through text-gray-400': action.completed }"
             >
               <td class="px-6 py-4">
-                <input type="checkbox" v-model="selectedIds" :value="action.id" class="w-5 h-5 rounded-full border-2 border-purple-400 text-purple-600 focus:ring-purple-500"/>
+                <button 
+                  @click="completeAction(action)"
+                  :class="['w-5 h-5 rounded-full border-2 border-purple-400 text-purple-600 focus:ring-purple-500', 
+                    action.completed ? 'bg-green-100 border-green-500' : 'bg-white border-purple-400']"
+                  :title="action.completed ? '恢复行动' : '完成行动'"
+                >
+                  <span v-if="action.completed" class="text-green-600 text-xs">✓</span>
+                </button>
               </td>
               <td class="px-6 py-4 font-medium text-purple-900">{{ action.title }}</td>
               <td class="px-6 py-4 text-gray-600">{{ action.description || '-' }}</td>
@@ -273,9 +268,7 @@
             <!-- 编辑模式的行动行 -->
             <template v-if="editingItem && editingItem.type === 'action' && editingItem.id === action.id && editingItem.filter === filter.value">
               <tr class="border-b border-pink-100 bg-pink-50 transition-all">
-                <td class="px-6 py-4">
-                  <input type="checkbox" v-model="selectedIds" :value="action.id" class="w-5 h-5 rounded-full border-2 border-purple-400 text-purple-600 focus:ring-purple-500"/>
-                </td>
+                <td class="px-6 py-4"></td>
                 <td class="px-6 py-4">
                   <input v-model="editForm.title" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动名称"/>
                 </td>
@@ -545,8 +538,18 @@
                       <td class="px-6 pl-16 py-3"></td>
                       <td class="px-6 py-3 font-medium text-purple-700">📝 {{ action.title }}</td>
                       <td class="px-6 py-3 text-gray-600">{{ action.description || '-' }}</td>
-                      <td class="px-6 py-3"></td>
-                      <td class="px-6 py-3"></td>
+                  <td class="px-6 py-4">
+                    <!-- 重要度：直接显示父目标的值和样式 -->
+                    <div class="w-16 h-8 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 flex items-center justify-center text-blue-600 font-medium">
+                      {{ Math.round(goal.importance) }}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <!-- 紧急度：直接显示父目标的值和样式 -->
+                    <div class="w-16 h-8 rounded-full bg-gradient-to-r from-orange-100 to-orange-200 flex items-center justify-center text-orange-600 font-medium">
+                      {{ Math.round(goal.urgency) }}
+                    </div>
+                  </td>
                       <td class="px-6 py-3">
                         <div class="flex items-center gap-2">
                           <button 
