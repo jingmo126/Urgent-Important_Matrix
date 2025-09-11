@@ -473,7 +473,18 @@
                   <td class="px-6 py-4">
                     <input v-model="newActionForm.description" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动描述"/>
                   </td>
-                  <td class="px-6 py-4"></td>
+                  <td class="px-6 py-4">
+                    <!-- 重要度：直接显示父目标的值和样式 -->
+                    <div class="w-16 h-8 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 flex items-center justify-center text-blue-600 font-medium">
+                      {{ Math.round(goal.importance) }}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <!-- 紧急度：直接显示父目标的值和样式 -->
+                    <div class="w-16 h-8 rounded-full bg-gradient-to-r from-orange-100 to-orange-200 flex items-center justify-center text-orange-600 font-medium">
+                      {{ Math.round(goal.urgency) }}
+                    </div>
+                  </td>
                   <td class="px-6 py-4">
                     <div class="flex items-center gap-2">
                       <button 
