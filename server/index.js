@@ -109,6 +109,11 @@ const Action = sequelize.define('Action', {
     type: DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: false
+  },
+  repeating: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
   }
 });
 

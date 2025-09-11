@@ -114,7 +114,11 @@ export const useTaskStore = defineStore('task', {
       
       try {
         const response = await axios.get('/api/actions')
-        this.actions = response.data
+        // 确保每个行动都有repeating属性，默认为false
+        this.actions = response.data.map(action => ({
+          ...action,
+          repeating: action.repeating !== undefined ? action.repeating : false
+        }))
       } catch (error) {
         this.error = error.message || '获取行动失败'
         console.error('获取行动失败:', error)
@@ -130,7 +134,11 @@ export const useTaskStore = defineStore('task', {
       
       try {
         const response = await axios.get(`/api/goals/${goalId}/actions`)
-        return response.data
+        // 确保每个行动都有repeating属性，默认为false
+        return response.data.map(action => ({
+          ...action,
+          repeating: action.repeating !== undefined ? action.repeating : false
+        }))
       } catch (error) {
         this.error = error.message || '获取行动失败'
         console.error('获取行动失败:', error)
@@ -154,7 +162,13 @@ export const useTaskStore = defineStore('task', {
     async fetchCompletedActions() {
       try {
         const response = await axios.get('/api/tasks/completed')
-        this.completedActions = response.data.filter(item => item.goalId)
+        this.completedActions = response.data
+          .filter(item => item.goalId)
+          // 确保每个行动都有repeating属性，默认为false
+          .map(action => ({
+            ...action,
+            repeating: action.repeating !== undefined ? action.repeating : false
+          }))
       } catch (error) {
         console.error('获取已完成行动失败:', error)
       }
@@ -375,6 +389,29 @@ export const useTaskStore = defineStore('task', {
       } catch (error) {
         this.error = error.message || '标记行动失败'
         console.error('标记行动失败:', error)
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    // 切换行动重复状态
+    async toggleActionRepeating(actionId) {
+      this.loading = true
+      this.error = null
+      
+      try {
+        const action = this.actions.find(a => a.id === actionId)
+        if (action) {
+          const newRepeatingState = !action.repeating
+          const response = await axios.patch(`/api/actions/${actionId}`, { repeating: newRepeatingState })
+          const index = this.actions.findIndex(a => a.id === actionId)
+          if (index !== -1) {
+            this.actions[index] = response.data
+          }
+        }
+      } catch (error) {
+        this.error = error.message || '切换重复状态失败'
+        console.error('切换重复状态失败:', error)
       } finally {
         this.loading = false
       }

@@ -84,7 +84,10 @@
                   <span v-if="goal.completed" class="text-green-600 text-xs">✓</span>
                 </button>
               </td>
-              <td class="px-6 py-4 font-medium text-purple-900">{{ goal.title }}</td>
+              <td class="px-6 py-4 font-medium text-purple-900">
+                    {{ goal.title }}
+                    <span v-if="hasRepeatingActions(goal)" class="ml-1 text-blue-500" title="此目标存在重复行动">🔄</span>
+                  </td>
               <td class="px-6 py-4 text-gray-600">{{ goal.description || '-' }}</td>
               <td class="px-6 py-4">
                 <div class="w-16 h-8 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 flex items-center justify-center text-blue-600 font-medium">
@@ -241,29 +244,39 @@
                   <span v-if="action.completed" class="text-green-600 text-xs">✓</span>
                 </button>
               </td>
-              <td class="px-6 py-4 font-medium text-purple-900">{{ action.title }}</td>
+              <td class="px-6 py-4 font-medium text-purple-900">
+                {{ action.title }}
+                <span v-if="action.repeating" class="ml-1 inline-block text-blue-600" title="重复行动">🔄</span>
+              </td>
               <td class="px-6 py-4 text-gray-600">{{ action.description || '-' }}</td>
               <td class="px-6 py-4">
                 <span class="px-3 py-1 rounded-full bg-pink-100 text-pink-600 text-sm">{{ getGoalTitleById(action.goalId) || '无' }}</span>
               </td>
               <td class="px-6 py-4">
-                <div class="flex items-center gap-2">
-                  <button 
-                    @click="editAction(action)" 
-                    class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
-                    title="编辑行动"
-                  >
-                    ✏️
-                  </button>
-                  <button 
-                    @click="toggleActionMark(action)" 
-                    class="p-2 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition-all"
-                    :title="action.marked ? '取消标记' : '标记行动'"
-                  >
-                    {{ action.marked ? '⭐' : '☆' }}
-                  </button>
-                </div>
-              </td>
+                  <div class="flex items-center gap-2">
+                    <button 
+                      @click="editAction(action)" 
+                      class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
+                      title="编辑行动"
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      @click="toggleActionMark(action)" 
+                      class="p-2 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition-all"
+                      :title="action.marked ? '取消标记' : '标记行动'"
+                    >
+                      {{ action.marked ? '⭐' : '☆' }}
+                    </button>
+                    <button 
+                      @click="toggleActionRepeating(action)" 
+                      :class="['p-2 rounded-full transition-all', action.repeating ? 'bg-blue-200 text-blue-700' : 'bg-blue-100 text-blue-600 hover:bg-blue-200']"
+                      :title="action.repeating ? '取消行动重复' : '设置行动重复'"
+                    >
+                      🔄
+                    </button>
+                  </div>
+                </td>
             </tr>
             <!-- 编辑模式的行动行 -->
             <template v-if="editingItem && editingItem.type === 'action' && editingItem.id === action.id && editingItem.filter === filter.value">
@@ -416,7 +429,10 @@
                       {{ expandedGoals.includes(goal.id) ? '▼' : '▶' }}
                     </button>
                   </td>
-                  <td class="px-6 py-5 font-bold text-xl text-purple-800">🎯 {{ goal.title }}</td>
+                  <td class="px-6 py-5 font-bold text-xl text-purple-800">
+                    🎯 {{ goal.title }}
+                    <span v-if="hasRepeatingActions(goal)" class="ml-1 text-blue-500" title="此目标存在重复行动">🔄</span>
+                  </td>
                   <td class="px-6 py-5 text-gray-600">{{ goal.description || '-' }}</td>
                   <td class="px-6 py-5">
                     <div class="w-16 h-8 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 flex items-center justify-center text-blue-600 font-medium">
@@ -536,7 +552,10 @@
                       :class="{ 'line-through text-gray-400': action.completed }"
                     >
                       <td class="px-6 pl-16 py-3"></td>
-                      <td class="px-6 py-3 font-medium text-purple-700">📝 {{ action.title }}</td>
+                      <td class="px-6 py-3 font-medium text-purple-700">
+                        📝 {{ action.title }}
+                        <span v-if="action.repeating" class="ml-1 inline-block text-blue-600" title="重复行动">🔄</span>
+                      </td>
                       <td class="px-6 py-3 text-gray-600">{{ action.description || '-' }}</td>
                   <td class="px-6 py-4">
                     <!-- 重要度：直接显示父目标的值和样式 -->
@@ -553,19 +572,26 @@
                       <td class="px-6 py-3">
                         <div class="flex items-center gap-2">
                           <button 
-                          @click.stop="editAction(action)" 
-                          class="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
-                          title="编辑行动"
-                        >
-                          ✏️
-                        </button>
-                          <button 
-                            @click="toggleActionMark(action)" 
-                            class="p-1.5 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition-all"
-                            :title="action.marked ? '取消标记' : '标记行动'"
-                          >
-                            {{ action.marked ? '⭐' : '☆' }}
-                          </button>
+                        @click.stop="editAction(action)" 
+                        class="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
+                        title="编辑行动"
+                      >
+                        ✏️
+                      </button>
+                      <button 
+                        @click="toggleActionMark(action)" 
+                        class="p-1.5 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition-all"
+                        :title="action.marked ? '取消标记' : '标记行动'"
+                      >
+                        {{ action.marked ? '⭐' : '☆' }}
+                      </button>
+                      <button 
+                        @click="toggleActionRepeating(action)" 
+                        :class="['p-1.5 rounded-full transition-all', action.repeating ? 'bg-blue-200 text-blue-700' : 'bg-blue-100 text-blue-600 hover:bg-blue-200']"
+                        :title="action.repeating ? '取消行动重复' : '设置行动重复'"
+                      >
+                        🔄
+                      </button>
                         </div>
                       </td>
                     </tr>
@@ -608,7 +634,7 @@ const showAddActionFormForAll = ref(false);
 const showAddGoalForm = ref(false);
 const editingItem = ref(null);
 const editForm = ref({});
-const newActionForm = ref({ title: '', description: '', goalId: '' });
+const newActionForm = ref({ title: '', description: '', goalId: '', repeating: false });
 const newGoalForm = ref({ title: '', description: '', importance: 5, urgency: 5 });
 
 // 计算属性
@@ -822,11 +848,50 @@ async function completeAction(action) {
     } else {
       await taskStore.completeAction(action.id);
       notification.value = '行动已完成';
+      
+      // 如果是重复行动，在第二天创建新的行动
+      if (action.repeating) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const newAction = {
+          title: action.title,
+          description: action.description,
+          goalId: action.goalId,
+          sourceView: action.sourceView || 'actions'
+        };
+        await taskStore.addAction(newAction);
+        notification.value = '行动已完成，已为明天创建新的重复行动';
+      }
     }
+    
+    // 检查目标是否应该被自动完成
+    await checkAndUpdateGoalCompletion(action.goalId);
+    
     setTimeout(() => notification.value = '', 3000);
   } catch (error) {
     notification.value = '操作失败，请稍后再试';
     setTimeout(() => notification.value = '', 3000);
+  }
+}
+
+// 检查并更新目标完成状态
+async function checkAndUpdateGoalCompletion(goalId) {
+  if (!goalId) return;
+  
+  try {
+    const goal = goals.value.find(g => g.id === goalId);
+    if (!goal || goal.completed) return;
+    
+    const goalActions = actions.value.filter(a => a.goalId === goalId);
+    const allCompleted = goalActions.every(a => a.completed);
+    const hasRepeatingActions = goalActions.some(a => a.repeating);
+    
+    if (allCompleted && !hasRepeatingActions) {
+      await taskStore.completeGoal(goalId);
+      notification.value += '，目标已自动完成';
+    }
+  } catch (error) {
+    console.error('检查目标完成状态失败:', error);
   }
 }
 
@@ -933,7 +998,7 @@ function cancelNewAction() {
   showAddActionForm.value = false;
   showAddActionFormForAction.value = false;
   showAddActionFormForAll.value = false;
-  newActionForm.value = { title: '', description: '', goalId: '' };
+  newActionForm.value = { title: '', description: '', goalId: '', repeating: false };
   currentGoal.value = null;
 }
 
@@ -961,6 +1026,39 @@ async function saveNewGoal() {
 function cancelNewGoal() {
   showAddGoalForm.value = false;
   newGoalForm.value = { title: '', description: '', importance: 5, urgency: 5 };
+}
+
+// 切换行动重复状态
+async function toggleActionRepeating(action) {
+  try {
+    // 存储当前重复状态，用于通知消息
+    const wasRepeating = action.repeating;
+    console.log('切换重复状态前:', wasRepeating);
+    
+    // 调用taskStore切换重复状态
+    await taskStore.toggleActionRepeating(action.id);
+    
+    // 手动更新本地action对象的repeating属性
+    // 因为我们无法直接修改响应式数据中的对象，所以需要重新获取数据
+    await loadData();
+    
+    // 查找更新后的行动，验证repeating状态是否已更改
+    const updatedAction = actions.value.find(a => a.id === action.id);
+    console.log('切换重复状态后:', updatedAction?.repeating);
+    
+    // 根据之前的状态显示通知
+    notification.value = wasRepeating ? '已取消行动重复' : '已设置行动重复';
+    setTimeout(() => notification.value = '', 3000);
+  } catch (error) {
+    console.error('切换重复状态失败:', error);
+    notification.value = '操作失败，请稍后再试';
+    setTimeout(() => notification.value = '', 3000);
+  }
+}
+
+// 判断目标是否有重复行动
+function hasRepeatingActions(goal) {
+  return actions.value.some(action => action.goalId === goal.id && action.repeating);
 }
 
 // 切换目标展开状态
