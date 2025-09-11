@@ -289,12 +289,24 @@ app.get('/api/tasks', async (req, res) => {
 // 获取已完成任务
 app.get('/api/tasks/completed', async (req, res) => {
   try {
-    const completedTasks = await Task.findAll({
+    // 获取已完成的目标
+    const completedGoals = await Task.findAll({
       where: {
         completed: true
       }
     });
-    res.json(completedTasks);
+    
+    // 获取已完成的行动
+    const completedActions = await Action.findAll({
+      where: {
+        completed: true
+      }
+    });
+    
+    // 合并已完成的目标和行动并返回
+    // 注意：对于客户端的区分逻辑，目标没有goalId，行动有goalId
+    const allCompletedTasks = [...completedGoals, ...completedActions];
+    res.json(allCompletedTasks);
   } catch (error) {
     console.error('获取已完成任务失败:', error);
     res.status(500).json({ message: '获取已完成任务失败', error: error.message });

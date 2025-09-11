@@ -23,19 +23,16 @@
           <thead class="bg-gradient-to-r from-green-100 to-emerald-100">
             <tr>
               <th class="px-6 py-4 text-left text-sm font-bold text-green-700 tracking-wider">
-                📋 任务
+                📋 性质
               </th>
               <th class="px-6 py-4 text-left text-sm font-bold text-green-700 tracking-wider">
-                ⭐ 重要度
+                🏷️ 名称
               </th>
               <th class="px-6 py-4 text-left text-sm font-bold text-green-700 tracking-wider">
-                🔥 紧急度
+                💬 描述
               </th>
               <th class="px-6 py-4 text-left text-sm font-bold text-green-700 tracking-wider">
                 📅 完成日期
-              </th>
-              <th class="px-6 py-4 text-left text-sm font-bold text-green-700 tracking-wider">
-                🎯 优先级
               </th>
               <th class="px-6 py-4 text-left text-sm font-bold text-green-700 tracking-wider">
                 ⚙️ 操作
@@ -46,43 +43,32 @@
             <tr v-for="task in completedTasks" :key="task.id" class="hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300">
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
-                  <div class="flex-shrink-0 h-12 w-12">
-                    <div class="h-12 w-12 rounded-full flex items-center justify-center text-xl shadow-lg border-2 border-white bg-gradient-to-br from-green-200 to-emerald-200">
-                      ✅
+                  <div class="flex-shrink-0 h-10 w-10">
+                    <div class="h-10 w-10 rounded-full flex items-center justify-center text-lg shadow-md border-2 border-white bg-gradient-to-br from-blue-200 to-purple-200">
+                      {{ task.goalId ? '📝' : '🎯' }}
                     </div>
                   </div>
-                  <div class="ml-4">
-                    <div class="text-sm font-bold text-green-800 line-through">
-                      {{ task.title }}
-                    </div>
-                    <div v-if="task.description" class="text-sm text-green-600 truncate max-w-xs">
-                      {{ task.description }}
+                  <div class="ml-3">
+                    <div class="text-sm font-bold text-green-800">
+                      {{ task.goalId ? '行动' : '目标' }}
                     </div>
                   </div>
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="bg-gradient-to-r from-yellow-200 to-orange-200 text-orange-800 px-3 py-1 rounded-full text-sm font-bold shadow-md">
-                    {{ Math.round(task.importance) }}/10
-                  </div>
+                <div class="text-sm font-bold text-green-800 line-through">
+                  {{ task.title || '无标题任务' }}
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="bg-gradient-to-r from-red-200 to-pink-200 text-red-800 px-3 py-1 rounded-full text-sm font-bold shadow-md">
-                    {{ Math.round(task.urgency) }}/10
-                  </div>
+                <div v-if="task.description" class="text-sm text-green-600 truncate max-w-xs">
+                  {{ task.description }}
                 </div>
+                <div v-else class="text-sm text-gray-400">-</div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="bg-gradient-to-r from-green-200 to-emerald-200 text-green-800 px-3 py-1 rounded-full font-bold shadow-md inline-block">
                   {{ formatDate(task.completedAt) }}
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="bg-gradient-to-r from-green-200 to-emerald-200 text-green-800 px-3 py-1 rounded-full text-sm font-bold shadow-md inline-block">
-                  {{ task.priority.toFixed(1) }}
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -102,7 +88,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useTaskStore } from '../store/taskStore';
 
 const taskStore = useTaskStore();
@@ -111,6 +97,19 @@ const taskStore = useTaskStore();
 const completedTasks = computed(() => {
   return taskStore.completedTasks || [];
 });
+
+// 组件挂载时加载已完成任务数据
+onMounted(() => {
+  loadCompletedTasks();
+});
+
+async function loadCompletedTasks() {
+  try {
+    await taskStore.fetchCompletedTasks();
+  } catch (error) {
+    console.error('加载已完成任务失败:', error);
+  }
+}
 
 // 格式化日期
 function formatDate(dateString) {

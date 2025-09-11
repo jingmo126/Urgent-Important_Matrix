@@ -32,15 +32,7 @@
             <span class="ml-2 font-medium text-purple-700">全部</span>
           </label>
         </div>
-        <div class="flex items-center gap-4">
-          <button 
-            @click="deleteSelected" 
-            class="px-4 py-2 rounded-full bg-red-100 text-red-600 font-medium hover:bg-red-200 transition-all flex items-center gap-2"
-            :disabled="selectedCount === 0"
-          >
-            🗑️ 删除选中
-          </button>
-        </div>
+        <!-- 移除删除选中按钮 -->
       </div>
     </div>
 
@@ -123,11 +115,11 @@
                     ➕
                   </button>
                   <button 
-                    @click="toggleGoalMark(goal)" 
-                    class="p-2 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition-all"
-                    :title="goal.marked ? '取消标记' : '标记目标'"
+                    @click="deleteGoal(goal)"
+                    class="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-all"
+                    title="删除目标"
                   >
-                    {{ goal.marked ? '⭐' : '☆' }}
+                    🗑️
                   </button>
                 </div>
               </td>
@@ -255,25 +247,25 @@
               <td class="px-6 py-4">
                   <div class="flex items-center gap-2">
                     <button 
-                      @click="editAction(action)" 
+                      @click="editAction(action)"
                       class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
                       title="编辑行动"
                     >
                       ✏️
                     </button>
                     <button 
-                      @click="toggleActionMark(action)" 
-                      class="p-2 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition-all"
-                      :title="action.marked ? '取消标记' : '标记行动'"
-                    >
-                      {{ action.marked ? '⭐' : '☆' }}
-                    </button>
-                    <button 
-                      @click="toggleActionRepeating(action)" 
+                      @click="toggleActionRepeating(action)"
                       :class="['p-2 rounded-full transition-all', action.repeating ? 'bg-blue-200 text-blue-700' : 'bg-blue-100 text-blue-600 hover:bg-blue-200']"
                       :title="action.repeating ? '取消行动重复' : '设置行动重复'"
                     >
                       🔄
+                    </button>
+                    <button 
+                      @click="deleteAction(action)"
+                      class="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-all"
+                      title="删除行动"
+                    >
+                      🗑️
                     </button>
                   </div>
                 </td>
@@ -572,25 +564,25 @@
                       <td class="px-6 py-3">
                         <div class="flex items-center gap-2">
                           <button 
-                        @click.stop="editAction(action)" 
+                        @click.stop="editAction(action)"
                         class="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
                         title="编辑行动"
                       >
                         ✏️
                       </button>
                       <button 
-                        @click="toggleActionMark(action)" 
-                        class="p-1.5 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition-all"
-                        :title="action.marked ? '取消标记' : '标记行动'"
-                      >
-                        {{ action.marked ? '⭐' : '☆' }}
-                      </button>
-                      <button 
-                        @click="toggleActionRepeating(action)" 
+                        @click="toggleActionRepeating(action)"
                         :class="['p-1.5 rounded-full transition-all', action.repeating ? 'bg-blue-200 text-blue-700' : 'bg-blue-100 text-blue-600 hover:bg-blue-200']"
                         :title="action.repeating ? '取消行动重复' : '设置行动重复'"
                       >
                         🔄
+                      </button>
+                      <button 
+                        @click="deleteAction(action)"
+                        class="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-all"
+                        title="删除行动"
+                      >
+                        🗑️
                       </button>
                         </div>
                       </td>

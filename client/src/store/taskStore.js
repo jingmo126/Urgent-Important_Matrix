@@ -56,7 +56,12 @@ export const useTaskStore = defineStore('task', {
     
     // 为了保持向后兼容
     tasks: (state) => state.goals,
-    completedTasks: (state) => [...state.completedGoals, ...state.completedActions].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt)),
+    completedTasks: (state) => {
+      // 确保completedAt存在且有效
+      return [...state.completedGoals, ...state.completedActions]
+        .filter(task => task.completedAt)
+        .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+    },
     tasksByQuadrant: (state) => {
       const quadrants = {
         q1: [], // 重要且紧急
@@ -304,11 +309,13 @@ export const useTaskStore = defineStore('task', {
       try {
         const goal = this.goals.find(g => g.id === goalId)
         if (goal) {
-          // 添加完成时间
+          // 添加完成时间并确保包含所有必要属性
           const completedGoal = {
             ...goal,
             completedAt: new Date().toISOString(),
-            completed: true
+            completed: true,
+            // 确保priority属性存在且为数字
+            priority: typeof goal.priority === 'number' ? goal.priority : 0
           }
           
           // 发送到服务器
@@ -334,11 +341,13 @@ export const useTaskStore = defineStore('task', {
       try {
         const action = this.actions.find(a => a.id === actionId)
         if (action) {
-          // 添加完成时间
+          // 添加完成时间并确保包含所有必要属性
           const completedAction = {
             ...action,
             completedAt: new Date().toISOString(),
-            completed: true
+            completed: true,
+            // 确保priority属性存在且为数字
+            priority: typeof action.priority === 'number' ? action.priority : 0
           }
           
           // 发送到服务器
