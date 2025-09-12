@@ -157,42 +157,7 @@
                 </td>
               </tr>
             </template>
-            <!-- 编辑模式的目标行 -->
-            <template v-if="editingItem && editingItem.value && editingItem.value.type === 'goal' && editingItem.value.filter === filter.value">
-              <tr class="border-b border-pink-100 bg-pink-50 transition-all">
-                <td class="px-6 py-4"></td>
-                <td class="px-6 py-4">
-                  <input v-model="editForm.title" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="目标名称"/>
-                </td>
-                <td class="px-6 py-4">
-                  <input v-model="editForm.description" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="目标描述"/>
-                </td>
-                <td class="px-6 py-4">
-                  <input v-model.number="editForm.importance" type="number" min="1" max="10" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"/>
-                </td>
-                <td class="px-6 py-4">
-                  <input v-model.number="editForm.urgency" type="number" min="1" max="10" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"/>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-2">
-                    <button 
-                      @click="saveEdit" 
-                      class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
-                      title="完成修改"
-                    >
-                      ✅
-                    </button>
-                    <button 
-                      @click="cancelEdit" 
-                      class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
-                      title="取消修改"
-                    >
-                      ❌
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </template>
+
             <!-- 新建目标行 -->
             <tr v-if="showAddGoalForm" class="border-b border-pink-100 bg-pink-50 transition-all">
               <td class="px-6 py-4"></td>
@@ -253,9 +218,9 @@
             </tr>
           </thead>
           <tbody>
+          <template v-for="action in filteredActions" :key="action.id + '_edit'">
             <tr 
-              v-for="action in filteredActions" 
-              :key="action.id"
+              v-if="!editActionList.some(item => item.id === action.id)" 
               class="border-b border-pink-100 hover:bg-pink-50 transition-all"
               :class="{ 'line-through text-gray-400': action.completed }"
             >
@@ -304,17 +269,17 @@
                 </td>
             </tr>
             <!-- 编辑模式的行动行 -->
-            <template v-if="editingItem && editingItem.type === 'action' && editingItem.id === action.id && editingItem.filter === filter.value">
-              <tr class="border-b border-pink-100 bg-pink-50 transition-all">
+
+              <tr v-else class="border-b border-pink-100 bg-pink-50 transition-all">
                 <td class="px-6 py-4"></td>
                 <td class="px-6 py-4">
-                  <input v-model="editForm.title" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动名称"/>
+                  <input v-model="editActionForms[action.id].title" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动名称"/>
                 </td>
                 <td class="px-6 py-4">
-                  <input v-model="editForm.description" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动描述"/>
+                  <input v-model="editActionForms[action.id].description" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动描述"/>
                 </td>
                 <td class="px-6 py-4">
-                  <select v-model="editForm.goalId" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                  <select v-model="editActionForms[action.id].goalId" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
                     <option value="">无</option>
                     <option v-for="goal in goals" :key="goal.id" :value="goal.id">{{ goal.title }}</option>
                   </select>
@@ -322,14 +287,14 @@
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-2">
                     <button 
-                      @click="saveEdit" 
+                      @click="saveEdit(action.id)" 
                       class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
                       title="完成修改"
                     >
                       ✅
                     </button>
                     <button 
-                      @click="cancelEdit" 
+                      @click="cancelEdit(action.id)" 
                       class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
                       title="取消修改"
                     >
@@ -339,8 +304,7 @@
                 </td>
               </tr>
             </template>
-            <template v-else>
-            </template>
+
             <!-- 新建行动行 -->
             <tr v-if="showAddActionFormForAction" class="border-b border-pink-100 bg-pink-50 transition-all">
               <td class="px-6 py-4"></td>
@@ -397,54 +361,56 @@
             <!-- 目标行 -->
             <template v-for="goal in goalsWithActions" :key="goal.id">
               <!-- 编辑模式的目标行 -->
-              <template v-if="editingItem && editingItem.type === 'goal' && editingItem.id === goal.id && editingItem.filter === filter.value">
-                <tr class="border-b border-purple-200 bg-purple-50 transition-all">
-                  <td class="px-6 py-5">
-                    <button 
-                      @click="toggleGoalExpand(goal.id)" 
-                      class="p-2 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200 transition-all"
-                      title="展开/收起行动"
-                    >
-                      {{ expandedGoals.includes(goal.id) ? '▼' : '▶' }}
-                    </button>
-                  </td>
-                  <td class="px-6 py-5">
-                    <input v-model="editForm.title" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="目标名称"/>
-                  </td>
-                  <td class="px-6 py-5">
-                    <input v-model="editForm.description" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="目标描述"/>
-                  </td>
-                  <td class="px-6 py-5">
-                    <input v-model.number="editForm.importance" type="number" min="1" max="10" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"/>
-                  </td>
-                  <td class="px-6 py-5">
-                    <input v-model.number="editForm.urgency" type="number" min="1" max="10" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"/>
-                  </td>
-                  <td class="px-6 py-5">
-                    <div class="flex items-center gap-2">
-                      <button 
-                        @click="saveEdit" 
-                        class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
-                        title="完成修改"
-                      >
-                        ✅
-                      </button>
-                      <button 
-                        @click="cancelEdit" 
-                        class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
-                        title="取消修改"
-                      >
-                        ❌
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </template>
-              <template v-else>
                 <tr 
-                  class="border-b border-purple-200 hover:bg-purple-50 transition-all"
-                  :class="{ 'line-through text-gray-400': goal.completed }"
+                  v-if="editAllList.some(g => g.id === goal.id)"
+                  class="border-b border-purple-200 bg-purple-50 transition-all"
                 >
+                <td class="px-6 py-5">
+                  <button 
+                    @click="toggleGoalExpand(goal.id)" 
+                    class="p-2 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200 transition-all"
+                    title="展开/收起行动"
+                  >
+                    {{ expandedGoals.includes(goal.id) ? '▼' : '▶' }}
+                  </button>
+                </td>
+                <td class="px-6 py-5">
+                  <input v-model="editForms[goal.id].title" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="目标名称"/>
+                </td>
+                <td class="px-6 py-5">
+                  <input v-model="editForms[goal.id].description" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="目标描述"/>
+                </td>
+                <td class="px-6 py-5">
+                  <input v-model.number="editForms[goal.id].importance" type="number" min="1" max="10" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"/>
+                </td>
+                <td class="px-6 py-5">
+                  <input v-model.number="editForms[goal.id].urgency" type="number" min="1" max="10" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"/>
+                </td>
+                <td class="px-6 py-5">
+                  <div class="flex items-center gap-2">
+                    <button 
+                      @click="saveEdit(goal.id)" 
+                      class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
+                      title="完成修改"
+                    >
+                      ✅
+                    </button>
+                    <button 
+                      @click="cancelEdit(goal.id)" 
+                      class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+                      title="取消修改"
+                    >
+                      ❌
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <!-- 普通模式的目标行 -->
+                <template v-else>
+                  <tr 
+                    class="border-b border-purple-200 hover:bg-purple-50 transition-all"
+                    :class="{ 'line-through text-gray-400': goal.completed }"
+                  >
                   <td class="px-6 py-5">
                     <button 
                       @click="toggleGoalExpand(goal.id)" 
@@ -540,28 +506,28 @@
                 </tr>
                 <template v-for="action in goal.actions" :key="action.id">
                   <!-- 编辑模式的行动行 -->
-                  <template v-if="editingItem && editingItem.type === 'action' && editingItem.id === action.id && editingItem.filter === filter.value">
+                  <template v-if="editAllList.some(a => a.id === action.id)">
                     <tr class="border-b border-pink-100 bg-pink-50 transition-all">
                       <td class="px-6 pl-16 py-3"></td>
                       <td class="px-6 py-3">
-                        <input v-model="editForm.title" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动名称"/>
+                        <input v-model="editActionForms[action.id].title" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动名称"/>
                       </td>
                       <td class="px-6 py-3">
-                        <input v-model="editForm.description" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动描述"/>
+                        <input v-model="editActionForms[action.id].description" type="text" class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="行动描述"/>
                       </td>
                       <td class="px-6 py-3"></td>
                       <td class="px-6 py-3"></td>
                       <td class="px-6 py-3">
                         <div class="flex items-center gap-2">
                           <button 
-                            @click="saveEdit" 
+                            @click="saveEdit(action.id)" 
                             class="p-1.5 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
                             title="完成修改"
                           >
                             ✅
                           </button>
                           <button 
-                            @click="cancelEdit" 
+                            @click="cancelEdit(action.id)" 
                             class="p-1.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
                             title="取消修改"
                           >
@@ -660,9 +626,13 @@ const showAddGoalForm = ref(false);
 const editingItem = ref(null);
 const editForm = ref({});
 const editForms = ref({}); // 使用对象映射，键为目标ID，值为表单数据
+const editActionForms = ref({}); // 使用对象映射，键为行动ID，值为表单数据
 const newActionForm = ref({ title: '', description: '', goalId: '', repeating: false });
 const newGoalForm = ref({ title: '', description: '', importance: 5, urgency: 5 });
-const editGoalList = ref([]);
+// 为每个视图创建独立的编辑列表
+const editGoalList = ref([]); // 仅目标视图的编辑列表
+const editActionList = ref([]); // 仅行动视图的编辑列表
+const editAllList = ref([]); // 全部视图的编辑列表
 
 // 计算属性
 const goals = computed(() => taskStore.goals);
@@ -948,11 +918,21 @@ function getGoalTitleById(goalId) {
 
 // 编辑目标
 function editGoal(goal) {
-  // 检查目标是否已在编辑列表中
-  if (!editGoalList.value.some(g => g.id === goal.id)) {
-    editGoalList.value.push(goal);
+  // 根据当前视图选择对应的编辑列表
+  let currentEditList;
+  if (filter.value === 'goals') {
+    currentEditList = editGoalList.value;
+  } else if (filter.value === 'actions') {
+    currentEditList = editActionList.value;
+  } else {
+    currentEditList = editAllList.value;
   }
-  editingItem.value = { id: goal.id, type: 'goal', filter: filter.value };
+  
+  // 检查目标是否已在编辑列表中
+  if (!currentEditList.some(g => g.id === goal.id)) {
+    currentEditList.push(goal);
+  }
+  
   // 为每个目标创建独立的表单数据
   editForms.value[goal.id] = {
     title: goal.title,
@@ -960,33 +940,61 @@ function editGoal(goal) {
     importance: goal.importance,
     urgency: goal.urgency
   };
+  
+  // 保留editingItem以便处理行动编辑
+  editingItem.value = { id: goal.id, type: 'goal', filter: filter.value };
 }
 
 // 编辑行动
 function editAction(action) {
-  editingItem.value = { id: action.id, type: 'action', filter: filter.value };
-  editForm.value = {
+  // 根据当前视图选择对应的编辑列表
+  let currentEditList;
+  if (filter.value === 'actions') {
+    currentEditList = editActionList.value;
+  } else if (filter.value === 'all') {
+    currentEditList = editAllList.value;
+  } else {
+    currentEditList = editGoalList.value;
+  }
+  
+  // 检查行动是否已在编辑列表中
+  if (!currentEditList.some(a => a.id === action.id)) {
+    currentEditList.push(action);
+  }
+  
+  // 为每个行动创建独立的表单数据
+  editActionForms.value[action.id] = {
     title: action.title,
     description: action.description,
     goalId: action.goalId
   };
+  
+  // 保留editingItem以便向后兼容
+  editingItem.value = { id: action.id, type: 'action', filter: filter.value };
 }
 
 // 保存编辑
-async function saveEdit(goalId) {
+async function saveEdit(itemId) {
   try {
-    // 使用传入的goalId或从editingItem中获取
-    if (goalId && editForms.value[goalId]) {
-      await taskStore.updateGoal({ id: goalId, ...editForms.value[goalId] });
+    // 使用传入的itemId或从editingItem中获取
+    if (itemId && editForms.value[itemId]) {
+      // 更新目标
+      await taskStore.updateGoal({ id: itemId, ...editForms.value[itemId] });
       notification.value = '目标更新成功';
-      // 传入goalId来取消特定目标的编辑状态
-      cancelEdit(goalId);
+      // 传入itemId来取消特定目标的编辑状态
+      cancelEdit(itemId);
+    } else if (itemId && editActionForms.value[itemId]) {
+      // 更新行动
+      await taskStore.updateAction({ id: itemId, ...editActionForms.value[itemId] });
+      notification.value = '行动更新成功';
+      // 传入itemId来取消特定行动的编辑状态
+      cancelEdit(itemId);
     } else if (editingItem.value && editingItem.value.type === 'goal') {
       await taskStore.updateGoal({ id: editingItem.value.id, ...(editForms.value[editingItem.value.id] || editForm.value) });
       notification.value = '目标更新成功';
       cancelEdit();
     } else if (editingItem.value && editingItem.value.type === 'action') {
-      await taskStore.updateAction({ id: editingItem.value.id, ...editForm.value });
+      await taskStore.updateAction({ id: editingItem.value.id, ...(editActionForms.value[editingItem.value.id] || editForm.value) });
       notification.value = '行动更新成功';
       cancelEdit();
     }
@@ -998,18 +1006,32 @@ async function saveEdit(goalId) {
 }
 
 // 取消编辑
-function cancelEdit(goalId) {
+function cancelEdit(itemId) {
   // 清除编辑列表和编辑状态
-  if (goalId) {
-    // 如果传入了goalId，移除指定的目标编辑状态
-    editGoalList.value = editGoalList.value.filter(g => g.id !== goalId);
+  if (itemId) {
+    // 如果传入了itemId，从所有编辑列表中移除指定的编辑状态（可能是目标或行动）
+    editGoalList.value = editGoalList.value.filter(item => item.id !== itemId);
+    editActionList.value = editActionList.value.filter(item => item.id !== itemId);
+    editAllList.value = editAllList.value.filter(item => item.id !== itemId);
     // 移除对应的表单数据
-    delete editForms.value[goalId];
-  } else if (editingItem.value && editingItem.value.type === 'goal') {
-    // 否则按照原来的逻辑处理
-    editGoalList.value = editGoalList.value.filter(g => g.id !== editingItem.value.id);
-    // 移除对应的表单数据
-    delete editForms.value[editingItem.value.id];
+    delete editForms.value[itemId];
+    delete editActionForms.value[itemId];
+  } else if (editingItem.value) {
+    if (editingItem.value.type === 'goal') {
+      // 处理目标编辑状态
+      editGoalList.value = editGoalList.value.filter(g => g.id !== editingItem.value.id);
+      editActionList.value = editActionList.value.filter(g => g.id !== editingItem.value.id);
+      editAllList.value = editAllList.value.filter(g => g.id !== editingItem.value.id);
+      // 移除对应的表单数据
+      delete editForms.value[editingItem.value.id];
+    } else if (editingItem.value.type === 'action') {
+      // 处理行动编辑状态
+      editGoalList.value = editGoalList.value.filter(a => a.id !== editingItem.value.id);
+      editActionList.value = editActionList.value.filter(a => a.id !== editingItem.value.id);
+      editAllList.value = editAllList.value.filter(a => a.id !== editingItem.value.id);
+      // 移除对应的表单数据
+      delete editActionForms.value[editingItem.value.id];
+    }
     editingItem.value = null;
     editForm.value = {};
   } else {
