@@ -50,15 +50,42 @@
         </div>
         <table class="min-w-full">
           <thead>
-            <tr class="bg-gradient-to-r from-pink-100 to-purple-100 text-left">
-              <th class="px-6 py-4 rounded-tl-2xl"></th>
-              <th class="px-6 py-4 font-bold text-purple-700">目标</th>
-              <th class="px-6 py-4 font-bold text-purple-700">描述</th>
-              <th class="px-6 py-4 font-bold text-purple-700">重要度</th>
-              <th class="px-6 py-4 font-bold text-purple-700">紧急度</th>
-              <th class="px-6 py-4 font-bold text-purple-700 rounded-tr-2xl">操作</th>
-            </tr>
-          </thead>
+              <tr class="bg-gradient-to-r from-pink-100 to-purple-100 text-left">
+                <th class="px-6 py-4 rounded-tl-2xl"></th>
+                <th 
+                  class="px-6 py-4 font-bold text-purple-700 cursor-pointer hover:bg-pink-200 transition-all"
+                  @click="handleSort('title')"
+                >
+                  目标
+                  <span class="ml-1">
+                    <span v-if="sortField === 'title' && sortDirection === 'asc'">&uarr;</span>
+                    <span v-else-if="sortField === 'title' && sortDirection === 'desc'">&darr;</span>
+                  </span>
+                </th>
+                <th class="px-6 py-4 font-bold text-purple-700">描述</th>
+                <th 
+                  class="px-6 py-4 font-bold text-purple-700 cursor-pointer hover:bg-pink-200 transition-all"
+                  @click="handleSort('importance')"
+                >
+                  重要度
+                  <span class="ml-1">
+                    <span v-if="sortField === 'importance' && sortDirection === 'asc'">&uarr;</span>
+                    <span v-else-if="sortField === 'importance' && sortDirection === 'desc'">&darr;</span>
+                  </span>
+                </th>
+                <th 
+                  class="px-6 py-4 font-bold text-purple-700 cursor-pointer hover:bg-pink-200 transition-all"
+                  @click="handleSort('urgency')"
+                >
+                  紧急度
+                  <span class="ml-1">
+                    <span v-if="sortField === 'urgency' && sortDirection === 'asc'">&uarr;</span>
+                    <span v-else-if="sortField === 'urgency' && sortDirection === 'desc'">&darr;</span>
+                  </span>
+                </th>
+                <th class="px-6 py-4 font-bold text-purple-700 rounded-tr-2xl">操作</th>
+              </tr>
+            </thead>
           <tbody>
             <!-- 判断目标是否在编辑列表中 -->
             <template v-for="goal in filteredGoals" :key="goal.id">
@@ -227,9 +254,27 @@
           <thead>
             <tr class="bg-gradient-to-r from-pink-100 to-purple-100 text-left">
               <th class="px-6 py-4 rounded-tl-2xl"></th>
-              <th class="px-6 py-4 font-bold text-purple-700">行动</th>
+              <th 
+                class="px-6 py-4 font-bold text-purple-700 cursor-pointer hover:bg-pink-200 transition-all"
+                @click="handleSort('title')"
+              >
+                行动
+                <span class="ml-1">
+                  <span v-if="sortField === 'title' && sortDirection === 'asc'">↑</span>
+                  <span v-else-if="sortField === 'title' && sortDirection === 'desc'">↓</span>
+                </span>
+              </th>
               <th class="px-6 py-4 font-bold text-purple-700">描述</th>
-              <th class="px-6 py-4 font-bold text-purple-700">所属目标</th>
+              <th 
+                class="px-6 py-4 font-bold text-purple-700 cursor-pointer hover:bg-pink-200 transition-all"
+                @click="handleSort('goalId')"
+              >
+                所属目标
+                <span class="ml-1">
+                  <span v-if="sortField === 'goalId' && sortDirection === 'asc'">↑</span>
+                  <span v-else-if="sortField === 'goalId' && sortDirection === 'desc'">↓</span>
+                </span>
+              </th>
               <th class="px-6 py-4 font-bold text-purple-700 rounded-tr-2xl">操作</th>
             </tr>
           </thead>
@@ -366,10 +411,37 @@
           <thead>
               <tr class="bg-gradient-to-r from-pink-100 to-purple-100 text-left">
                 <th class="px-6 py-4"></th>
-                <th class="px-6 py-4 font-bold text-purple-700">名称</th>
+                <th 
+                  class="px-6 py-4 font-bold text-purple-700 cursor-pointer hover:bg-pink-200 transition-all"
+                  @click="handleSort('title')"
+                >
+                  名称
+                  <span class="ml-1">
+                    <span v-if="sortField === 'title' && sortDirection === 'asc'">&uarr;</span>
+                    <span v-else-if="sortField === 'title' && sortDirection === 'desc'">&darr;</span>
+                  </span>
+                </th>
                 <th class="px-6 py-4 font-bold text-purple-700">描述</th>
-                <th class="px-6 py-4 font-bold text-purple-700">重要度</th>
-                <th class="px-6 py-4 font-bold text-purple-700">紧急度</th>
+                <th 
+                  class="px-6 py-4 font-bold text-purple-700 cursor-pointer hover:bg-pink-200 transition-all"
+                  @click="handleSort('importance')"
+                >
+                  重要度
+                  <span class="ml-1">
+                    <span v-if="sortField === 'importance' && sortDirection === 'asc'">&uarr;</span>
+                    <span v-else-if="sortField === 'importance' && sortDirection === 'desc'">&darr;</span>
+                  </span>
+                </th>
+                <th 
+                  class="px-6 py-4 font-bold text-purple-700 cursor-pointer hover:bg-pink-200 transition-all"
+                  @click="handleSort('urgency')"
+                >
+                  紧急度
+                  <span class="ml-1">
+                    <span v-if="sortField === 'urgency' && sortDirection === 'asc'">&uarr;</span>
+                    <span v-else-if="sortField === 'urgency' && sortDirection === 'desc'">&darr;</span>
+                  </span>
+                </th>
                 <th class="px-6 py-4 font-bold text-purple-700">操作</th>
               </tr>
             </thead>
@@ -653,13 +725,48 @@ const editAllList = ref([]); // 全部视图的编辑列表
 const viewingGoalId = ref(null); // 当前查看的目标ID，null表示不在目标特定视图
 const viewSource = ref(''); // 视图来源，'quadrant'表示从坐标系视图来，'todoList'表示从行动列表来
 
+// 排序相关状态
+const sortField = ref(''); // 当前排序字段
+const sortDirection = ref('desc'); // 当前排序方向，'asc'表示升序，'desc'表示降序
+
 // 计算属性
 const goals = computed(() => taskStore.goals);
 const actions = computed(() => taskStore.actions);
-const filteredGoals = computed(() => goals.value.filter(goal => !goal.completed));
-// 修改filteredActions计算属性，支持目标特定视图
+
+// 修改filteredGoals计算属性，支持排序
+const filteredGoals = computed(() => {
+  let filtered = goals.value.filter(goal => !goal.completed);
+  
+  // 应用排序
+  if (sortField.value) {
+    filtered.sort((a, b) => {
+      let compareValue = 0;
+      // 根据不同字段进行比较
+      if (sortField.value === 'title') {
+        compareValue = a.title.localeCompare(b.title);
+      } else if (['importance', 'urgency'].includes(sortField.value)) {
+        // 重要度和紧急度按数值比较
+        compareValue = b[sortField.value] - a[sortField.value];
+      }
+      
+      // 根据排序方向调整结果
+      if (sortDirection.value === 'asc' && ['importance', 'urgency'].includes(sortField.value)) {
+        // 重要度和紧急度默认为降序，当设置为升序时反转比较结果
+        compareValue = -compareValue;
+      } else if (sortDirection.value === 'desc' && sortField.value === 'title') {
+        // 标题默认为升序，当设置为降序时反转比较结果
+        compareValue = -compareValue;
+      }
+      
+      return compareValue;
+    });
+  }
+  
+  return filtered;
+});
+// 修改filteredActions计算属性，支持目标特定视图和排序
 const filteredActions = computed(() => {
-  return actions.value.filter(action => {
+  let filtered = actions.value.filter(action => {
     // 如果在目标特定视图，只显示该目标的行动
     if (viewingGoalId.value) {
       return !action.completed && action.goalId === viewingGoalId.value;
@@ -667,13 +774,64 @@ const filteredActions = computed(() => {
     // 否则显示所有未完成的行动，并且过滤掉特定视图来源的行动
     return !action.completed && !(action.sourceView === 'all' && filter.value !== 'all');
   });
+  
+  // 应用排序
+  if (sortField.value) {
+    filtered.sort((a, b) => {
+      let compareValue = 0;
+      // 根据不同字段进行比较
+      if (sortField.value === 'title') {
+        compareValue = a.title.localeCompare(b.title);
+      } else if (sortField.value === 'goalId') {
+        // 按所属目标排序
+        const goalA = goals.value.find(g => g.id === a.goalId) || { title: '' };
+        const goalB = goals.value.find(g => g.id === b.goalId) || { title: '' };
+        compareValue = goalA.title.localeCompare(goalB.title);
+      }
+      
+      // 根据排序方向调整结果
+      if (sortDirection.value === 'desc' && ['title', 'goalId'].includes(sortField.value)) {
+        compareValue = -compareValue;
+      }
+      
+      return compareValue;
+    });
+  }
+  
+  return filtered;
 });
 const selectedCount = computed(() => selectedIds.value.length);
 
 // 目标与行动组合数据
 const goalsWithActions = computed(() => {
   // 在"全部"视图下返回所有目标，在其他视图下只返回未完成的目标
-  const filteredGoals = filter.value === 'all' ? goals.value : goals.value.filter(goal => !goal.completed);
+  let filteredGoals = filter.value === 'all' ? goals.value : goals.value.filter(goal => !goal.completed);
+  
+  // 应用排序
+  if (sortField.value) {
+    filteredGoals.sort((a, b) => {
+      let compareValue = 0;
+      // 根据不同字段进行比较
+      if (sortField.value === 'title') {
+        compareValue = a.title.localeCompare(b.title);
+      } else if (['importance', 'urgency'].includes(sortField.value)) {
+        // 重要度和紧急度按数值比较
+        compareValue = b[sortField.value] - a[sortField.value];
+      }
+      
+      // 根据排序方向调整结果
+      if (sortDirection.value === 'asc' && ['importance', 'urgency'].includes(sortField.value)) {
+        // 重要度和紧急度默认为降序，当设置为升序时反转比较结果
+        compareValue = -compareValue;
+      } else if (sortDirection.value === 'desc' && sortField.value === 'title') {
+        // 标题默认为升序，当设置为降序时反转比较结果
+        compareValue = -compareValue;
+      }
+      
+      return compareValue;
+    });
+  }
+  
   return filteredGoals.map(goal => ({
     ...goal,
     actions: actions.value.filter(action => action.goalId === goal.id && (!goal.completed || filter.value === 'all'))
@@ -770,6 +928,24 @@ async function deleteSelected() {
     } catch (error) {
       notification.value = '删除失败，请稍后再试';
       setTimeout(() => notification.value = '', 3000);
+    }
+  }
+}
+
+// 处理表头点击排序
+function handleSort(field) {
+  // 如果点击的是当前排序字段，则切换排序方向
+  if (sortField.value === field) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    // 否则设置为新的排序字段
+    sortField.value = field;
+    // 重要度和紧急度默认为降序
+    if (['importance', 'urgency'].includes(field)) {
+      sortDirection.value = 'desc';
+    } else {
+      // 其他字段默认为升序
+      sortDirection.value = 'asc';
     }
   }
 }
