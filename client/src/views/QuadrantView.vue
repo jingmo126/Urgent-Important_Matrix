@@ -47,10 +47,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useTaskStore } from '../store/taskStore';
 import CoordinateSystem from '../components/CoordinateSystem.vue';
 import GoalModal from '../components/GoalModal.vue';
 
+const router = useRouter();
 const taskStore = useTaskStore();
 
 // 模态框状态
@@ -74,18 +76,62 @@ function openCreateGoalModal(position) {
 }
 
 // 创建目标
-function createGoal(goal) {
+async function createGoal(goal) {
   // 设置默认值和计算优先级（使用与store中相同的加权算法）
   goal.importance = initialImportance.value;
   goal.urgency = initialUrgency.value;
   goal.priority = goal.importance * 0.4 + goal.urgency * 0.6;
   goal.marked = false;
   
-  taskStore.addGoal(goal);
+  // 解析目标描述中的行动信息
+  const description = goal.description || '';
+  let actionsToCreate = [];
+  let goalDescription = description;
+  
+  // 检查是否有*标记
+  const starIndex = description.indexOf('*');
+  
+  if (starIndex !== -1) {
+    // 提取目标描述（*之前的内容）
+    goalDescription = description.substring(0, starIndex).trim();
+    
+    // 提取行动部分（*之后的内容）并去除所有换行符
+    const actionsPart = description.substring(starIndex + 1).replace(/\n/g, '').trim();
+    
+    // 使用正则表达式匹配所有形如"标题(描述)"的模式
+    const actionMatches = [...actionsPart.matchAll(/([^()]+?)\(([^()]+?)\)/g)];
+    
+    // 解析每个匹配的行动
+    actionsToCreate = actionMatches.map(match => ({
+      title: match[1].trim(),
+      description: match[2].trim()
+    })).filter(action => action.title); // 过滤掉空标题的行动
+  }
+  
+  // 创建目标（使用处理后的描述）
+  const goalData = {
+    ...goal,
+    description: goalDescription
+  };
+  
+  const newGoal = await taskStore.addGoal(goalData);
+  
+  // 如果有需要创建的行动，为新目标创建行动
+  if (actionsToCreate.length > 0) {
+    for (const action of actionsToCreate) {
+      await taskStore.addAction({
+        ...action,
+        goalId: newGoal.id
+      });
+    }
+    
+    notification.value = `目标创建成功，同时创建了${actionsToCreate.length}个行动`;
+  } else {
+    notification.value = '目标创建成功！';
+  }
+  
   showCreateModal.value = false;
   
-  // 显示成功通知
-  notification.value = '目标创建成功！';
   setTimeout(() => {
     notification.value = '';
   }, 3000);
@@ -93,11 +139,10 @@ function createGoal(goal) {
 
 // 进入ToDoList清单
 function enterTodoList(goal) {
-  // 跳转到ToDoList页面，这里通过Vue Router实现
-  // 暂时使用简单的提示来演示功能
-  notification.value = `进入"${goal.title}"的ToDoList清单`;
-  setTimeout(() => {
-    notification.value = '';
-  }, 3000);
+  // 跳转到ToDoList页面的目标特定行动列表
+  router.push({
+    path: '/actions',
+    query: { goalId: goal.id }
+  });
 }
 </script>

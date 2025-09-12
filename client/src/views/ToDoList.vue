@@ -103,11 +103,11 @@
                       ✏️
                     </button>
                     <button 
-                      @click="enterGoalActions(goal)" 
+                      @click="enterGoalActions(goal)"
                       class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
-                      title="查看行动列表"
+                      title="查看此目标的行动列表"
                     >
-                      📋
+                      📋 
                     </button>
                     <button 
                       @click="deleteGoal(goal)"
@@ -199,7 +199,23 @@
 
       <!-- 仅行动视图 -->
       <div v-else-if="filter === 'actions'">
-        <div class="mb-4 flex justify-end">
+        <!-- 在目标特定视图中显示目标名称作为标题 -->
+        <h2 v-if="viewingGoalId" class="text-xl font-bold text-purple-700 mb-4">
+          📝 {{ getGoalTitleById(viewingGoalId) }} - 行动列表
+        </h2>
+        
+        <div class="mb-4 flex justify-between items-center">
+          <!-- 在目标特定视图中显示返回按钮 -->
+          <div v-if="viewingGoalId">
+            <button 
+              @click="exitGoalActionsView"
+              class="px-4 py-2 rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-all flex items-center gap-2"
+            >
+              ↩ 返回目标视图
+            </button>
+          </div>
+          
+          <!-- 新建行动按钮 -->
           <button 
             @click="showAddActionFormForAction = true"
             class="px-4 py-2 rounded-full bg-gradient-to-r from-pink-400 to-purple-400 text-white font-medium hover:shadow-lg transition-all flex items-center gap-2"
@@ -633,15 +649,22 @@ const newGoalForm = ref({ title: '', description: '', importance: 5, urgency: 5 
 const editGoalList = ref([]); // 仅目标视图的编辑列表
 const editActionList = ref([]); // 仅行动视图的编辑列表
 const editAllList = ref([]); // 全部视图的编辑列表
+// 目标行动临时视图状态
+const viewingGoalId = ref(null); // 当前查看的目标ID，null表示不在目标特定视图
+const viewSource = ref(''); // 视图来源，'quadrant'表示从坐标系视图来，'todoList'表示从行动列表来
 
 // 计算属性
 const goals = computed(() => taskStore.goals);
 const actions = computed(() => taskStore.actions);
 const filteredGoals = computed(() => goals.value.filter(goal => !goal.completed));
-// 修改filteredActions计算属性，过滤掉来自"全部"视图的行动
+// 修改filteredActions计算属性，支持目标特定视图
 const filteredActions = computed(() => {
   return actions.value.filter(action => {
-    // 只显示未完成的行动，并且如果行动有sourceView标记，确保它不是来自"全部"视图
+    // 如果在目标特定视图，只显示该目标的行动
+    if (viewingGoalId.value) {
+      return !action.completed && action.goalId === viewingGoalId.value;
+    }
+    // 否则显示所有未完成的行动，并且过滤掉特定视图来源的行动
     return !action.completed && !(action.sourceView === 'all' && filter.value !== 'all');
   });
 });
@@ -665,6 +688,8 @@ onMounted(() => {
   if (goalId) {
     currentGoal.value = parseInt(goalId);
     filter.value = 'actions';
+    viewingGoalId.value = parseInt(goalId); // 设置当前查看的目标ID
+    viewSource.value = 'quadrant'; // 标记来源为坐标系视图
     // 滚动到相应位置
     setTimeout(() => {
       const element = document.querySelector(`[data-goal-id="${goalId}"]`);
@@ -752,8 +777,26 @@ async function deleteSelected() {
 // 进入目标的行动列表
 function enterGoalActions(goal) {
   filter.value = 'actions';
+  viewingGoalId.value = goal.id; // 设置当前查看的目标ID
+  viewSource.value = 'todoList'; // 标记来源为行动列表
   notification.value = `查看"${goal.title}"的行动列表`;
   setTimeout(() => notification.value = '', 3000);
+}
+
+// 退出目标特定视图
+function exitGoalActionsView() {
+  viewingGoalId.value = null;
+  if (viewSource.value === 'quadrant') {
+    // 从坐标系视图来的，返回坐标系视图
+    router.push('/');
+  } else {
+    // 从行动列表来的，返回仅目标视图
+    filter.value = 'goals';
+    notification.value = '已退出目标行动列表';
+    setTimeout(() => notification.value = '', 3000);
+  }
+  // 重置来源标记
+  viewSource.value = '';
 }
 
 // 删除目标
