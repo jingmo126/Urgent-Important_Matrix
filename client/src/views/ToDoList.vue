@@ -979,14 +979,17 @@ async function saveEdit(goalId) {
     if (goalId && editForms.value[goalId]) {
       await taskStore.updateGoal({ id: goalId, ...editForms.value[goalId] });
       notification.value = '目标更新成功';
+      // 传入goalId来取消特定目标的编辑状态
+      cancelEdit(goalId);
     } else if (editingItem.value && editingItem.value.type === 'goal') {
       await taskStore.updateGoal({ id: editingItem.value.id, ...(editForms.value[editingItem.value.id] || editForm.value) });
       notification.value = '目标更新成功';
+      cancelEdit();
     } else if (editingItem.value && editingItem.value.type === 'action') {
       await taskStore.updateAction({ id: editingItem.value.id, ...editForm.value });
       notification.value = '行动更新成功';
+      cancelEdit();
     }
-    cancelEdit();
     setTimeout(() => notification.value = '', 3000);
   } catch (error) {
     notification.value = '更新失败，请稍后再试';
@@ -995,15 +998,24 @@ async function saveEdit(goalId) {
 }
 
 // 取消编辑
-function cancelEdit() {
+function cancelEdit(goalId) {
   // 清除编辑列表和编辑状态
-  if (editingItem.value && editingItem.value.type === 'goal') {
+  if (goalId) {
+    // 如果传入了goalId，移除指定的目标编辑状态
+    editGoalList.value = editGoalList.value.filter(g => g.id !== goalId);
+    // 移除对应的表单数据
+    delete editForms.value[goalId];
+  } else if (editingItem.value && editingItem.value.type === 'goal') {
+    // 否则按照原来的逻辑处理
     editGoalList.value = editGoalList.value.filter(g => g.id !== editingItem.value.id);
     // 移除对应的表单数据
     delete editForms.value[editingItem.value.id];
+    editingItem.value = null;
+    editForm.value = {};
+  } else {
+    editingItem.value = null;
+    editForm.value = {};
   }
-  editingItem.value = null;
-  editForm.value = {};
 }
 
 // 保存新行动
