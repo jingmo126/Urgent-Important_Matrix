@@ -91,38 +91,7 @@
                   {{ Math.round(goal.urgency) }}
                 </div>
               </td>
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-2">
-                  <button 
-                    @click="editGoal(goal)" 
-                    class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
-                    title="编辑目标"
-                  >
-                    ✏️
-                  </button>
-                  <button 
-                    @click="enterGoalActions(goal)" 
-                    class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
-                    title="查看行动列表"
-                  >
-                    📋
-                  </button>
-                  <button 
-                    @click="addActionForGoal(goal)" 
-                    class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
-                    title="新建行动"
-                  >
-                    ➕
-                  </button>
-                  <button 
-                    @click="deleteGoal(goal)"
-                    class="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-all"
-                    title="删除目标"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </td>
+              <td class="px-6 py-4"></td>
             </tr>
             <!-- 编辑模式的目标行 -->
             <template v-if="editingItem && editingItem.type === 'goal' && editingItem.id === goal.id && editingItem.filter === filter.value">
@@ -436,31 +405,7 @@
                       {{ Math.round(goal.urgency) }}
                     </div>
                   </td>
-                  <td class="px-6 py-5">
-                    <div class="flex items-center gap-2">
-                      <button 
-                        @click.stop="editGoal(goal)" 
-                        class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
-                        title="编辑目标"
-                      >
-                        ✏️
-                      </button>
-                      <button 
-                        @click.stop="addActionForGoal(goal)" 
-                        class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
-                        title="新建行动"
-                      >
-                        ➕
-                      </button>
-                      <button 
-                        @click="toggleGoalMark(goal)" 
-                        class="p-2 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition-all"
-                        :title="goal.marked ? '取消标记' : '标记目标'"
-                      >
-                        {{ goal.marked ? '⭐' : '☆' }}
-                      </button>
-                    </div>
-                  </td>
+                  <td class="px-6 py-5"></td>
                 </tr>
               </template>
               <!-- 展开的行动 -->
