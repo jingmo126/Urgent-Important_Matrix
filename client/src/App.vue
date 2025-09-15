@@ -1,38 +1,36 @@
 <template>
-  <div class="min-h-screen flex bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50" style="font-family: '幼圆', 'Microsoft YaHei', sans-serif;">
-    <!-- 左上角导航栏开关按钮 -->
-    <button 
-      @click="toggleSidebar"
-      class="fixed top-4 left-4 z-50 bg-gradient-to-r from-pink-400 to-purple-400 text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
-      :class="{ 'left-72': isSidebarOpen }"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" v-if="isSidebarOpen" />
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" v-else />
-      </svg>
-    </button>
+  <div class="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50" style="font-family: '幼圆', 'Microsoft YaHei', sans-serif;">
+    <!-- 如果用户已登录，显示顶部导航栏和主内容区 -->
+    <template v-if="authStore.isAuthenticated">
+      <!-- 顶部导航栏 -->
+      <Sidebar />
+      
+      <!-- 主内容区 -->
+      <main class="pt-40 pb-10">
+        <div class="container mx-auto px-6">
+          <router-view />
+        </div>
+      </main>
+    </template>
     
-    <!-- 侧边栏 -->
-    <Sidebar :is-open="isSidebarOpen" @toggle="toggleSidebar" />
-    
-    <!-- 主内容区 -->
-    <main class="flex-1 transition-all duration-300" :class="{ 'ml-80': isSidebarOpen, 'ml-0': !isSidebarOpen }">
-      <div class="container mx-auto px-6 py-8 pt-20">
-        <router-view />
-      </div>
-    </main>
+    <!-- 如果用户未登录，只显示router-view -->
+    <template v-else>
+      <router-view />
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onMounted } from 'vue';
+import { useAuthStore } from './store/authStore';
 import Sidebar from './components/Sidebar.vue';
 
-const isSidebarOpen = ref(false);
+const authStore = useAuthStore();
 
-function toggleSidebar() {
-  isSidebarOpen.value = !isSidebarOpen.value;
-}
+// 初始化认证状态
+onMounted(() => {
+  authStore.initAuth();
+});
 </script>
 
 <style>

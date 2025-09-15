@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import { useAuthStore } from './authStore'
 
 export const useTaskStore = defineStore('task', {
   state: () => ({
@@ -9,7 +10,8 @@ export const useTaskStore = defineStore('task', {
     completedActions: [],
     loading: false,
     error: null,
-    editMode: false // 控制是否处于编辑模式
+    editMode: false, // 控制是否处于编辑模式
+    userId: null // 当前用户ID
   }),
   
   getters: {
@@ -23,6 +25,11 @@ export const useTaskStore = defineStore('task', {
       }
       
       state.goals.forEach(goal => {
+        // 确保只处理当前用户的目标
+        if (goal.userId !== undefined && goal.userId !== state.userId) {
+          return
+        }
+        
         if (goal.importance > 5 && goal.urgency > 5) {
           quadrants.q1.push(goal)
         } else if (goal.importance > 5 && goal.urgency <= 5) {
@@ -39,13 +46,20 @@ export const useTaskStore = defineStore('task', {
     
     // 按优先级排序的目标
     goalsByPriority: (state) => {
-      return [...state.goals].sort((a, b) => b.priority - a.priority)
+      return [...state.goals]
+        .filter(goal => goal.userId === undefined || goal.userId === state.userId)
+        .sort((a, b) => b.priority - a.priority)
     },
     
     // 按所属目标分组的行动
     actionsByGoal: (state) => {
       const groups = {}
       state.actions.forEach(action => {
+        // 确保只处理当前用户的行动
+        if (action.userId !== undefined && action.userId !== state.userId) {
+          return
+        }
+        
         if (!groups[action.goalId]) {
           groups[action.goalId] = []
         }
@@ -55,11 +69,11 @@ export const useTaskStore = defineStore('task', {
     },
     
     // 为了保持向后兼容
-    tasks: (state) => state.goals,
+    tasks: (state) => state.goals.filter(goal => goal.userId === undefined || goal.userId === state.userId),
     completedTasks: (state) => {
-      // 确保completedAt存在且有效
+      // 确保completedAt存在且有效，并且只返回当前用户的任务
       return [...state.completedGoals, ...state.completedActions]
-        .filter(task => task.completedAt)
+        .filter(task => task.completedAt && (task.userId === undefined || task.userId === state.userId))
         .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
     },
     tasksByQuadrant: (state) => {
@@ -71,6 +85,11 @@ export const useTaskStore = defineStore('task', {
       }
       
       state.goals.forEach(task => {
+        // 确保只处理当前用户的任务
+        if (task.userId !== undefined && task.userId !== state.userId) {
+          return
+        }
+        
         if (task.importance > 5 && task.urgency > 5) {
           quadrants.q1.push(task)
         } else if (task.importance > 5 && task.urgency <= 5) {
@@ -86,7 +105,9 @@ export const useTaskStore = defineStore('task', {
     },
     
     tasksByPriority: (state) => {
-      return [...state.goals].sort((a, b) => b.priority - a.priority)
+      return [...state.goals]
+        .filter(goal => goal.userId === undefined || goal.userId === state.userId)
+        .sort((a, b) => b.priority - a.priority)
     }
   },
   
@@ -96,13 +117,24 @@ export const useTaskStore = defineStore('task', {
       this.editMode = !this.editMode
     },
     
+    // 初始化用户ID
+    initUser() {
+      const authStore = useAuthStore()
+      this.userId = authStore.user?.id || null
+    },
+    
     // 获取所有目标
     async fetchGoals() {
       this.loading = true
       this.error = null
       
       try {
-        const response = await axios.get('/api/goals')
+        // 初始化用户ID
+        this.initUser()
+        
+        // 如果有用户ID，在请求中包含用户筛选
+        const url = this.userId ? `/api/goals?userId=${this.userId}` : '/api/goals'
+        const response = await axios.get(url)
         this.goals = response.data
       } catch (error) {
         this.error = error.message || '获取目标失败'
@@ -118,7 +150,12 @@ export const useTaskStore = defineStore('task', {
       this.error = null
       
       try {
-        const response = await axios.get('/api/actions')
+        // 初始化用户ID
+        this.initUser()
+        
+        // 如果有用户ID，在请求中包含用户筛选
+        const url = this.userId ? `/api/actions?userId=${this.userId}` : '/api/actions'
+        const response = await axios.get(url)
         // 确保每个行动都有repeating属性，默认为false
         this.actions = response.data.map(action => ({
           ...action,
@@ -138,7 +175,14 @@ export const useTaskStore = defineStore('task', {
       this.error = null
       
       try {
-        const response = await axios.get(`/api/goals/${goalId}/actions`)
+        // 初始化用户ID
+        this.initUser()
+        
+        // 如果有用户ID，在请求中包含用户筛选
+        const url = this.userId ? 
+          `/api/goals/${goalId}/actions?userId=${this.userId}` : 
+          `/api/goals/${goalId}/actions`
+        const response = await axios.get(url)
         // 确保每个行动都有repeating属性，默认为false
         return response.data.map(action => ({
           ...action,
@@ -156,7 +200,14 @@ export const useTaskStore = defineStore('task', {
     // 获取已完成目标
     async fetchCompletedGoals() {
       try {
-        const response = await axios.get('/api/tasks/completed')
+        // 初始化用户ID
+        this.initUser()
+        
+        // 如果有用户ID，在请求中包含用户筛选
+        const url = this.userId ? 
+          `/api/tasks/completed?userId=${this.userId}` : 
+          '/api/tasks/completed'
+        const response = await axios.get(url)
         this.completedGoals = response.data.filter(item => !item.goalId)
       } catch (error) {
         console.error('获取已完成目标失败:', error)
@@ -166,7 +217,14 @@ export const useTaskStore = defineStore('task', {
     // 获取已完成行动
     async fetchCompletedActions() {
       try {
-        const response = await axios.get('/api/tasks/completed')
+        // 初始化用户ID
+        this.initUser()
+        
+        // 如果有用户ID，在请求中包含用户筛选
+        const url = this.userId ? 
+          `/api/tasks/completed?userId=${this.userId}` : 
+          '/api/tasks/completed'
+        const response = await axios.get(url)
         this.completedActions = response.data
           .filter(item => item.goalId)
           // 确保每个行动都有repeating属性，默认为false
@@ -185,8 +243,16 @@ export const useTaskStore = defineStore('task', {
       this.error = null
       
       try {
+        // 初始化用户ID
+        this.initUser()
+        
         // 计算优先级
         goal.priority = goal.importance * 0.4 + goal.urgency * 0.6
+        
+        // 添加用户ID到目标数据
+        if (this.userId) {
+          goal.userId = this.userId
+        }
         
         const response = await axios.post('/api/tasks', goal)
         this.goals.push(response.data)
@@ -196,7 +262,8 @@ export const useTaskStore = defineStore('task', {
           await this.addAction({
             title: goal.title,
             description: goal.description,
-            goalId: response.data.id
+            goalId: response.data.id,
+            userId: this.userId // 传递用户ID给行动
           })
         }
         
@@ -215,6 +282,14 @@ export const useTaskStore = defineStore('task', {
       this.error = null
       
       try {
+        // 初始化用户ID
+        this.initUser()
+        
+        // 添加用户ID到行动数据
+        if (this.userId) {
+          action.userId = this.userId
+        }
+        
         const response = await axios.post('/api/actions', action)
         this.actions.push(response.data)
         return response.data
@@ -232,8 +307,16 @@ export const useTaskStore = defineStore('task', {
       this.error = null
       
       try {
+        // 初始化用户ID
+        this.initUser()
+        
         // 计算优先级
         goal.priority = goal.importance * 0.4 + goal.urgency * 0.6
+        
+        // 确保目标属于当前用户
+        if (this.userId) {
+          goal.userId = this.userId
+        }
         
         const response = await axios.put(`/api/tasks/${goal.id}`, goal)
         const index = this.goals.findIndex(g => g.id === goal.id)
@@ -254,6 +337,14 @@ export const useTaskStore = defineStore('task', {
       this.error = null
       
       try {
+        // 初始化用户ID
+        this.initUser()
+        
+        // 确保行动属于当前用户
+        if (this.userId) {
+          action.userId = this.userId
+        }
+        
         const response = await axios.put(`/api/actions/${action.id}`, action)
         const index = this.actions.findIndex(a => a.id === action.id)
         if (index !== -1) {
