@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 p-8">
+  <div class="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 p-4 md:p-8">
     <!-- 标题区域 -->
     <div class="max-w-6xl mx-auto mb-8 text-center">
       <h1 class="text-3xl md:text-4xl font-bold text-purple-700 mb-2">行动列表</h1>
@@ -36,8 +36,8 @@
       </div>
     </div>
 
-    <!-- 列表区域 -->
-    <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-6 border-2 border-pink-200 overflow-x-auto">
+    <!-- 列表区域 - 移动端优化 -->
+    <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-4 border-2 border-pink-200 overflow-x-auto">
       <!-- 仅目标视图 -->
       <div v-if="filter === 'goals'">
         <div class="mb-4 flex justify-end">
@@ -48,7 +48,10 @@
             ➕ 新建目标
           </button>
         </div>
-        <table class="min-w-full">
+        
+        <!-- 表格视图 - 大屏幕设备 -->
+        <div class="table-view">
+          <table class="min-w-full">
           <thead>
               <tr class="bg-gradient-to-r from-pink-100 to-purple-100 text-left">
                 <th class="px-6 py-4 rounded-tl-2xl"></th>
@@ -223,6 +226,59 @@
         </table>
         <div v-if="filteredGoals.length === 0" class="py-10 text-center text-gray-500">暂无目标数据</div>
         </div>
+        
+        <!-- 卡片式视图 - 小屏幕设备自动切换 -->
+        <div class="card-view">
+          <div v-for="goal in filteredGoals" :key="goal.id" class="goal-card mb-3 animate-fadeIn">
+            <div class="card-header">
+              <h3 class="font-medium text-purple-900">{{ goal.title }}</h3>
+              <button 
+                @click="completeGoal(goal)"
+                :class="['w-5 h-5 rounded-full border-2 border-purple-400 text-purple-600 focus:ring-purple-500', 
+                  goal.completed ? 'bg-green-100 border-green-500' : 'bg-white border-purple-400']"
+                  :title="goal.completed ? '恢复目标' : '完成目标'"
+              >
+                <span v-if="goal.completed" class="text-green-600 text-xs">✓</span>
+              </button>
+            </div>
+            <div class="card-content">
+              <p class="text-sm text-gray-600 mb-1">{{ goal.description || '-' }}</p>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                  重要度: {{ Math.round(goal.importance) }}
+                </span>
+                <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                  紧急度: {{ Math.round(goal.urgency) }}
+                </span>
+              </div>
+            </div>
+            <div class="card-actions">
+              <button 
+                @click.stop="editGoal(goal)" 
+                class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
+                title="编辑目标"
+              >
+                ✏️
+              </button>
+              <button 
+                @click="enterGoalActions(goal)"
+                class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all"
+                title="查看此目标的行动列表"
+              >
+                📋 
+              </button>
+              <button 
+                @click="deleteGoal(goal)"
+                class="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-all"
+                title="删除目标"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+          <div v-if="filteredGoals.length === 0" class="py-10 text-center text-gray-500">暂无目标数据</div>
+        </div>
+        </div>
 
       <!-- 仅行动视图 -->
       <div v-else-if="filter === 'actions'">
@@ -250,7 +306,10 @@
             ➕ 新建行动
           </button>
         </div>
-        <table class="min-w-full">
+        
+        <!-- 表格视图 - 大屏幕设备 -->
+        <div class="table-view">
+          <table class="min-w-full">
           <thead>
             <tr class="bg-gradient-to-r from-pink-100 to-purple-100 text-left">
               <th class="px-6 py-4 rounded-tl-2xl"></th>
@@ -403,6 +462,47 @@
           </tbody>
         </table>
         <div v-if="filteredActions.length === 0" class="py-10 text-center text-gray-500">暂无行动数据</div>
+        </div>
+        
+        <!-- 卡片式视图 - 小屏幕设备自动切换 -->
+        <div class="card-view">
+          <div v-for="action in filteredActions" :key="action.id" class="action-card mb-3 animate-fadeIn">
+            <div class="card-header">
+              <h3 class="font-medium text-purple-900">{{ action.title }}
+                <span v-if="action.repeating" class="ml-1 inline-block text-blue-600" title="重复行动">🔄</span>
+              </h3>
+              <button 
+                @click="completeAction(action)"
+                :class="['w-5 h-5 rounded-full border-2 border-purple-400 text-purple-600 focus:ring-purple-500', 
+                  action.completed ? 'bg-green-100 border-green-500' : 'bg-white border-purple-400']"
+                  :title="action.completed ? '恢复行动' : '完成行动'"
+              >
+                <span v-if="action.completed" class="text-green-600 text-xs">✓</span>
+              </button>
+            </div>
+            <div class="card-content">
+              <p class="text-sm text-gray-600 mb-2">{{ action.description || '-' }}</p>
+              <p class="text-xs text-gray-500">所属目标: {{ getGoalTitleById(action.goalId) }}</p>
+            </div>
+            <div class="card-actions">
+              <button 
+                @click="editAction(action)"
+                class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
+                title="编辑行动"
+              >
+                ✏️
+              </button>
+              <button 
+                @click="deleteAction(action)"
+                class="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-all"
+                title="删除行动"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+          <div v-if="filteredActions.length === 0" class="py-10 text-center text-gray-500">暂无行动数据</div>
+        </div>
       </div>
 
       <!-- 全部视图 -->
@@ -1402,4 +1502,123 @@ function toggleGoalExpand(goalId) {
 ::-webkit-scrollbar-thumb:hover {
   background: #c084fc;
 }
-</style>
+
+/* 移动端优化样式 */
+@media (max-width: 768px) {
+  /* 标题区域优化 */
+  .text-3xl {
+    font-size: 1.75rem !important;
+  }
+  .text-lg {
+    font-size: 1rem !important;
+  }
+  
+  /* 筛选按钮优化 */
+  .w-10 {
+    width: 2.25rem !important;
+  }
+  .h-10 {
+    height: 2.25rem !important;
+  }
+  .ml-2 {
+    margin-left: 0.25rem !important;
+  }
+  
+  /* 表格优化 - 使其在移动设备上更友好 */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    font-size: 0.875rem;
+  }
+  
+  /* 减少单元格内边距 */
+  .px-6 {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  .py-4 {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+  
+  /* 按钮优化 - 使其在移动设备上更小 */
+  button.p-2 {
+    padding: 0.25rem !important;
+  }
+  
+  /* 输入框和选择框优化 */
+  input, select {
+    font-size: 0.875rem !important;
+    padding: 0.5rem !important;
+  }
+}
+
+/* 小屏幕设备进一步优化 */
+@media (max-width: 480px) {
+  /* 进一步减小表格字体 */
+  table {
+    font-size: 0.75rem;
+  }
+  
+  /* 确保内容不会溢出容器 */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* 按钮尺寸进一步减小 */
+  .px-3 {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+  }
+  .py-1 {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+}
+
+/* 卡片式显示效果 - 针对手机端优化 */
+.card-view {
+  display: none;
+}
+
+/* 在特别小的屏幕上使用卡片式布局代替表格 */
+@media (max-width: 360px) {
+  /* 隐藏表格 */
+  .table-view {
+    display: none;
+  }
+  
+  /* 显示卡片式布局 */
+  .card-view {
+    display: block;
+  }
+  
+  /* 卡片样式 */
+  .goal-card, .action-card {
+    margin-bottom: 1rem;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid #f9a8d4;
+  }
+  
+  /* 卡片内元素样式 */
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .card-content {
+    margin-bottom: 0.75rem;
+  }
+  
+  .card-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+}</style>
